@@ -1,5 +1,18 @@
 import type { EligibilityStatus, SavingsAccountOffer } from "./accounts";
 
+/** Flat result returned by checkEligibility — used by UI components. */
+export interface EligibilityResult {
+  status: EligibilityStatus;
+  /** True only for age restrictions — cannot be actioned by the user. */
+  hardIneligible: boolean;
+  /** Human-readable conditions the user currently meets. */
+  metConditions: string[];
+  /** Human-readable conditions the user does not currently meet. */
+  unmetConditions: string[];
+  /** Advisory notices (intro rates, balance caps, stale data, withdrawal caveats). */
+  warnings: string[];
+}
+
 /** Result of evaluating one condition against the user's profile. */
 export interface ConditionCheck {
   conditionKey:

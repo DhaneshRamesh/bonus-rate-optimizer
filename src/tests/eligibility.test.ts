@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { checkAllConditions, deriveEligibilityStatus, worstStatus } from "@/lib/eligibility";
+import { checkAllConditions, checkEligibility, deriveEligibilityStatus, worstStatus } from "@/lib/eligibility";
+import { ACCOUNTS } from "@/data/accounts";
 import type { SavingsAccountOffer } from "@/types/accounts";
 import type { UserProfile } from "@/types/user";
 
@@ -210,6 +211,91 @@ describe("checkAllConditions — withdrawal_flexibility", () => {
     const profile = { ...BASE_PROFILE, wantsFlexibleWithdrawals: true };
     const checks = checkAllConditions(BASE_OFFER, profile); // BASE_OFFER is "full"
     expect(checks.find((c) => c.conditionKey === "withdrawal_flexibility")).toBeUndefined();
+  });
+});
+
+// ── checkEligibility — Westpac Life ──────────────────────────────────────────
+
+describe("checkEligibility — Westpac Life", () => {
+  const westpac = ACCOUNTS.find((a) => a.id === "westpac-life")!;
+
+  it("at_risk when card purchases and growth both fail", () => {
+    const profile: UserProfile = {
+      ...BASE_PROFILE,
+      monthlyCardPurchases: 2,       // requires 5
+      monthlyNetSavingsGrowth: -50,  // requires positive growth
+    };
+    const result = checkEligibility(profile, westpac);
+    expect(result.status).toBe("at_risk");
+    expect(result.hardIneligible).toBe(false);
+    expect(result.unmetConditions.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("likely_eligible when cards and growth both met", () => {
+    const result = checkEligibility(BASE_PROFILE, westpac); // 5 cards, 800 growth
+    expect(result.status).toBe("likely_eligible");
+    expect(result.hardIneligible).toBe(false);
+    expect(result.unmetConditions).toHaveLength(0);
+  });
+});
+
+// ── checkEligibility — ANZ Plus Growth Saver ─────────────────────────────────
+
+describe("checkEligibility — ANZ Plus Growth Saver", () => {
+  const anz = ACCOUNTS.find((a) => a.id === "anz-plus-growth-saver")!;
+
+  it("at_risk when growth is below $100", () => {
+    const profile: UserProfile = { ...BASE_PROFILE, monthlyNetSavingsGrowth: 50 };
+    const result = checkEligibility(profile, anz);
+    expect(result.status).toBe("at_risk");
+    expect(result.hardIneligible).toBe(false);
+    expect(result.unmetConditions.some((c) => c.toLowerCase().includes("grow"))).toBe(true);
+  });
+
+  it("likely_eligible when deposit met and growth exceeds $100", () => {
+    const result = checkEligibility(BASE_PROFILE, anz); // $1,000 deposit, 800 growth
+    expect(result.status).toBe("likely_eligible");
+    expect(result.unmetConditions).toHaveLength(0);
+  });
+});
+
+// ── checkEligibility — GSB Goal Saver (age hard-fail) ────────────────────────
+
+describe("checkEligibility — GSB Goal Saver", () => {
+  const gsbGoal = ACCOUNTS.find((a) => a.id === "gsb-goal-saver")!;
+
+  it("hard-fails when age is 25 (ageMax is 24)", () => {
+    const profile: UserProfile = { ...BASE_PROFILE, age: 25 };
+    const result = checkEligibility(profile, gsbGoal);
+    expect(result.status).toBe("not_eligible");
+    expect(result.hardIneligible).toBe(true);
+    expect(result.metConditions).toHaveLength(0);
+    expect(result.unmetConditions.length).toBeGreaterThan(0);
+  });
+
+  it("does not hard-fail when age is within limit", () => {
+    const profile: UserProfile = { ...BASE_PROFILE, age: 22 };
+    const result = checkEligibility(profile, gsbGoal);
+    expect(result.hardIneligible).toBe(false);
+  });
+});
+
+// ── checkEligibility — no-condition accounts ─────────────────────────────────
+
+describe("checkEligibility — no-condition accounts", () => {
+  it("Macquarie Savings returns likely_eligible with no unmet conditions", () => {
+    const macquarie = ACCOUNTS.find((a) => a.id === "macquarie-savings")!;
+    const result = checkEligibility(BASE_PROFILE, macquarie);
+    expect(result.status).toBe("likely_eligible");
+    expect(result.hardIneligible).toBe(false);
+    expect(result.unmetConditions).toHaveLength(0);
+  });
+
+  it("GSB Everyday Saver returns likely_eligible with no unmet conditions", () => {
+    const everyday = ACCOUNTS.find((a) => a.id === "gsb-everyday-saver")!;
+    const result = checkEligibility(BASE_PROFILE, everyday);
+    expect(result.status).toBe("likely_eligible");
+    expect(result.unmetConditions).toHaveLength(0);
   });
 });
 

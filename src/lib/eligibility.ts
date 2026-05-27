@@ -1,5 +1,5 @@
 import type { EligibilityStatus, SavingsAccountOffer } from "@/types/accounts";
-import type { ConditionCheck } from "@/types/ranking";
+import type { ConditionCheck, EligibilityResult } from "@/types/ranking";
 import type { UserProfile } from "@/types/user";
 
 /** Returns the most severe status from a set of condition checks. */
@@ -160,4 +160,123 @@ export function checkAllConditions(
   }
 
   return checks;
+}
+
+/**
+ * High-level eligibility check for UI display.
+ * Returns a flat result with human-readable condition labels and advisory warnings.
+ * Age failures are hard blockers (hardIneligible: true, early return).
+ * Deposit/card/growth failures are behavioural (at_risk, not not_eligible).
+ * Deterministic: same inputs always produce identical outputs.
+ */
+export function checkEligibility(
+  user: UserProfile,
+  account: SavingsAccountOffer
+): EligibilityResult {
+  // ── Age — hard blockers, early return ────────────────────────────────────
+  if (account.ageMin !== undefined && user.age < account.ageMin) {
+    return {
+      status: "not_eligible",
+      hardIneligible: true,
+      metConditions: [],
+      unmetConditions: [`Must be at least ${account.ageMin} years old`],
+      warnings: [],
+    };
+  }
+  if (account.ageMax !== undefined && user.age > account.ageMax) {
+    return {
+      status: "not_eligible",
+      hardIneligible: true,
+      metConditions: [],
+      unmetConditions: [`Must be ${account.ageMax} or younger`],
+      warnings: [],
+    };
+  }
+
+  const metConditions: string[] = [];
+  const unmetConditions: string[] = [];
+  const warnings: string[] = [];
+  let status: EligibilityStatus = "likely_eligible";
+
+  // ── Linked account ───────────────────────────────────────────────────────
+  if (account.requiresLinkedAccount) {
+    const label = `Open a linked ${account.provider} transaction account`;
+    if (user.willingToOpenLinkedAccount) {
+      metConditions.push(label);
+    } else {
+      unmetConditions.push(label);
+      status = "not_eligible";
+    }
+  }
+
+  // ── Monthly deposit ──────────────────────────────────────────────────────
+  if (account.monthlyDepositRequirement !== undefined) {
+    const required = account.monthlyDepositRequirement;
+    const actual = user.monthlyExternalDeposit;
+    if (actual >= required) {
+      metConditions.push(`Deposit $${required.toLocaleString()}+ per month`);
+    } else {
+      unmetConditions.push(
+        `Deposit $${required.toLocaleString()}+ per month (currently $${actual.toLocaleString()})`
+      );
+      if (status !== "not_eligible") status = "at_risk";
+    }
+  }
+
+  // ── Card purchases ───────────────────────────────────────────────────────
+  if (account.monthlyCardPurchaseRequirement !== undefined) {
+    const required = account.monthlyCardPurchaseRequirement;
+    const actual = user.monthlyCardPurchases;
+    if (actual >= required) {
+      metConditions.push(`Make ${required}+ card purchases per month`);
+    } else {
+      unmetConditions.push(
+        `Make ${required}+ card purchases per month (currently ${actual})`
+      );
+      if (status !== "not_eligible") status = "at_risk";
+    }
+  }
+
+  // ── Balance growth ───────────────────────────────────────────────────────
+  if (account.monthlyGrowthRequirement) {
+    const growth = user.monthlyNetSavingsGrowth;
+    if (growth > 100) {
+      metConditions.push("Balance grows each month");
+    } else {
+      const actualStr = growth > 0 ? `+$${growth.toLocaleString()}` : `$${growth.toLocaleString()}`;
+      unmetConditions.push(`Balance must grow each month (currently ${actualStr}/mo)`);
+      if (status !== "not_eligible") status = "at_risk";
+    }
+  }
+
+  // ── Withdrawal flexibility warning ───────────────────────────────────────
+  if (account.withdrawalFlexibility !== "full" && user.wantsFlexibleWithdrawals) {
+    if (status === "likely_eligible") status = "at_risk";
+    warnings.push(
+      account.withdrawalFlexibility === "growth-sensitive"
+        ? "Any withdrawal this month forfeits the bonus rate"
+        : "Withdrawals must be made via a linked account"
+    );
+  }
+
+  // ── Intro rate warning ───────────────────────────────────────────────────
+  if (account.introRatePa !== undefined && account.introMonths !== undefined) {
+    warnings.push(
+      `Intro rate of ${account.introRatePa}% p.a. applies for the first ${account.introMonths} months only`
+    );
+  }
+
+  // ── Balance cap warning ──────────────────────────────────────────────────
+  if (account.capAmount !== undefined) {
+    warnings.push(
+      `Bonus rate applies on balances up to $${account.capAmount.toLocaleString()} only`
+    );
+  }
+
+  // ── Stale data warning ───────────────────────────────────────────────────
+  warnings.push(
+    `Rates last verified ${account.lastChecked} — always confirm current terms at ${account.sourceLabel}`
+  );
+
+  return { status, hardIneligible: false, metConditions, unmetConditions, warnings };
 }
