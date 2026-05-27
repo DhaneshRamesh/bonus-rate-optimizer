@@ -1,250 +1,249 @@
-import type { SavingsAccount } from "@/types/accounts";
-
 /**
- * Curated demo dataset of publicly advertised Australian savings accounts.
- * Rates and conditions are approximate figures from public bank websites (~early 2025).
- * This is a concept demo — always verify current terms directly with the provider.
+ * DEMO / SAMPLE DATA — NOT FOR PRODUCTION USE
+ *
+ * This dataset is a curated snapshot of publicly advertised Australian savings
+ * account offers, assembled for demonstration purposes only. Rates, conditions,
+ * and eligibility criteria change frequently. Always verify current terms
+ * directly with the provider before making any financial decisions.
+ *
+ * Fields marked ASSUMPTION in the `notes` field are estimates derived from
+ * publicly available information and may not reflect the current offer precisely.
+ * Do not use this data in a live product without independent verification.
  */
-export const ACCOUNTS: SavingsAccount[] = [
-  {
-    id: "ing-savings-maximiser",
-    bank: "ING",
-    accountName: "Savings Maximiser",
-    bankInitials: "ING",
-    bankColor: "#FF6600",
-    baseRate: 0.55,
-    bonusRate: 4.95,
-    advertisedRate: 5.50,
-    balanceCap: 100_000,
-    conditions: [
-      {
-        type: "linked_account_required",
-        linkedAccount: "Orange Everyday",
-        label: "Hold an ING Orange Everyday account",
-        shortLabel: "Linked account",
-      },
-      {
-        type: "min_monthly_deposit",
-        amount: 1_000,
-        label: "Deposit $1,000+ per month to any ING account",
-        shortLabel: "$1,000 deposit",
-      },
-      {
-        type: "min_card_transactions",
-        count: 5,
-        linkedAccount: "Orange Everyday",
-        label: "Make 5+ card purchases with Orange Everyday",
-        shortLabel: "5+ card txns",
-      },
-      {
-        type: "balance_growth",
-        label: "Savings Maximiser balance must grow each month",
-        shortLabel: "Balance grows",
-      },
-    ],
-    notes: [
-      "Bonus rate applies on balances up to $100,000",
-      "Balances above cap earn base rate only",
-    ],
-    sourceNote: "ING Australia — rates approx. early 2025, verify at ing.com.au",
-  },
 
-  {
-    id: "ubank-high-interest",
-    bank: "Ubank",
-    accountName: "High Interest Savings",
-    bankInitials: "UB",
-    bankColor: "#5C2D91",
-    baseRate: 0.10,
-    bonusRate: 5.00,
-    advertisedRate: 5.10,
-    balanceCap: 250_000,
-    conditions: [
-      {
-        type: "min_monthly_deposit",
-        amount: 200,
-        label: "Deposit $200+ per month to any Ubank account",
-        shortLabel: "$200 deposit",
-      },
-    ],
-    notes: ["One of the simplest bonus conditions available"],
-    sourceNote: "Ubank — rates approx. early 2025, verify at ubank.com.au",
-  },
+import type { SavingsAccountOffer } from "@/types/accounts";
 
-  {
-    id: "anz-plus-save",
-    bank: "ANZ Plus",
-    accountName: "Save",
-    bankInitials: "ANZ",
-    bankColor: "#007DBA",
-    baseRate: 0.01,
-    bonusRate: 4.99,
-    advertisedRate: 5.00,
-    balanceCap: 250_000,
-    conditions: [
-      {
-        type: "min_monthly_deposit",
-        amount: 10,
-        label: "Deposit at least $10 per month",
-        shortLabel: "$10 deposit",
-      },
-      {
-        type: "no_withdrawals",
-        label: "Make no withdrawals during the month",
-        shortLabel: "No withdrawals",
-      },
-    ],
-    notes: [
-      "ANZ Plus is a digital-only account (app-based)",
-      "Even a single $10 deposit qualifies — but no withdrawals allowed",
-    ],
-    sourceNote: "ANZ Plus — rates approx. early 2025, verify at anz.com.au",
-  },
-
-  {
-    id: "westpac-life",
-    bank: "Westpac",
-    accountName: "Life",
-    bankInitials: "WBC",
-    bankColor: "#DA1710",
-    baseRate: 2.00,
-    bonusRate: 3.20,
-    advertisedRate: 5.20,
-    conditions: [
-      {
-        type: "min_card_transactions",
-        count: 5,
-        label: "Make 5+ card purchases per month",
-        shortLabel: "5+ card txns",
-      },
-      {
-        type: "balance_growth",
-        label: "Westpac Life balance must grow each month",
-        shortLabel: "Balance grows",
-      },
-    ],
-    notes: [
-      "Higher base rate means you earn something even without the bonus",
-      "No balance cap or linked account required",
-      "Youth Bonus (18–29) may offer a higher rate — check westpac.com.au",
-    ],
-    sourceNote: "Westpac — rates approx. early 2025, verify at westpac.com.au",
-  },
-
-  {
-    id: "me-homeme",
-    bank: "ME Bank",
-    accountName: "HomeME Savings",
-    bankInitials: "ME",
-    bankColor: "#00A8A0",
-    baseRate: 0.05,
-    bonusRate: 5.50,
-    advertisedRate: 5.55,
-    balanceCap: 100_000,
-    conditions: [
-      {
-        type: "linked_account_required",
-        linkedAccount: "SpendME Transaction Account",
-        label: "Hold a ME SpendME Transaction Account",
-        shortLabel: "Linked account",
-      },
-      {
-        type: "min_card_transactions",
-        count: 4,
-        linkedAccount: "SpendME card",
-        label: "Make 4+ purchases with your SpendME card per month",
-        shortLabel: "4+ card txns",
-      },
-    ],
-    notes: [
-      "Highest headline rate in this dataset",
-      "Requires the linked SpendME transaction account",
-    ],
-    sourceNote: "ME Bank — rates approx. early 2025, verify at mebank.com.au",
-  },
-
+export const ACCOUNTS: SavingsAccountOffer[] = [
+  // ──────────────────────────────────────────────────────────────────────────
+  // 1. Macquarie Bank — Savings Account
+  // Confidence: HIGH — well-documented, no conditions, consistently competitive
+  // ──────────────────────────────────────────────────────────────────────────
   {
     id: "macquarie-savings",
-    bank: "Macquarie",
-    accountName: "Savings Account",
-    bankInitials: "MQG",
-    bankColor: "#1A1F5E",
-    baseRate: 4.75,
-    bonusRate: 0,
-    advertisedRate: 4.75,
-    introRate: 4.85,
+    provider: "Macquarie Bank",
+    productName: "Savings Account",
+    baseRatePa: 4.75,
+    bonusRatePa: undefined,
+    totalMaxRatePa: 4.85,
+    introRatePa: 4.85,
     introMonths: 4,
-    conditions: [],
-    notes: [
-      "No ongoing conditions — base rate is always earned",
-      "New customers receive 4.85% for the first 4 months",
-      "Rate reverts to base after the intro period",
-    ],
-    sourceNote: "Macquarie Bank — rates approx. early 2025, verify at macquarie.com",
+    requiresLinkedAccount: false,
+    monthlyDepositRequirement: undefined,
+    monthlyCardPurchaseRequirement: undefined,
+    monthlyGrowthRequirement: undefined,
+    withdrawalFlexibility: "full",
+    conditionComplexityScore: 1,
+    sourceUrl: "https://www.macquarie.com/au/personal/banking/savings-accounts/savings-account",
+    sourceLabel: "Official provider page",
+    lastChecked: "2025-03-01",
+    notes:
+      "No ongoing conditions — base rate is always earned. " +
+      "New customers receive a higher intro rate for the first 4 months. " +
+      "ASSUMPTION: intro rate and intro period based on publicly advertised figures ~early 2025.",
   },
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // 2. AMP Bank — GO Save
+  // Confidence: MEDIUM — product details less precisely documented in public sources
+  // ──────────────────────────────────────────────────────────────────────────
   {
-    id: "boq-smart-saver",
-    bank: "Bank of Queensland",
-    accountName: "Smart Saver",
-    bankInitials: "BOQ",
-    bankColor: "#E8000D",
-    baseRate: 0.50,
-    bonusRate: 4.75,
-    advertisedRate: 5.25,
-    balanceCap: 250_000,
-    conditions: [
-      {
-        type: "linked_account_required",
-        linkedAccount: "BOQ Day2Day Account",
-        label: "Hold a BOQ Day2Day transaction account",
-        shortLabel: "Linked account",
-      },
-      {
-        type: "min_monthly_deposit",
-        amount: 1_000,
-        label: "Deposit $1,000+ per month to your BOQ account",
-        shortLabel: "$1,000 deposit",
-      },
-      {
-        type: "min_card_transactions",
-        count: 5,
-        linkedAccount: "BOQ Day2Day card",
-        label: "Make 5+ purchases with your BOQ Day2Day card",
-        shortLabel: "5+ card txns",
-      },
-    ],
-    notes: ["All three conditions must be met to earn the bonus rate"],
-    sourceNote: "Bank of Queensland — rates approx. early 2025, verify at boq.com.au",
+    id: "amp-go-save",
+    provider: "AMP Bank",
+    productName: "GO Save",
+    baseRatePa: 5.00,
+    bonusRatePa: undefined,
+    totalMaxRatePa: 5.40,
+    introRatePa: 5.40,
+    introMonths: 3,
+    requiresLinkedAccount: false,
+    monthlyDepositRequirement: undefined,
+    monthlyCardPurchaseRequirement: undefined,
+    monthlyGrowthRequirement: undefined,
+    withdrawalFlexibility: "full",
+    conditionComplexityScore: 1,
+    sourceUrl: "https://www.ampbank.com.au/personal/bank/savings-accounts/go-save",
+    sourceLabel: "Official provider page",
+    lastChecked: "2025-03-01",
+    notes:
+      "ASSUMPTION: base rate, intro rate, and intro period are estimates based on " +
+      "publicly available information ~early 2025. Verify all figures at provider. " +
+      "Actual product may require a minimum deposit or linked account — not confirmed.",
   },
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // 3. Westpac — Life
+  // Confidence: HIGH — widely documented product with stable conditions
+  // ──────────────────────────────────────────────────────────────────────────
   {
-    id: "gsbank-bonus-saver",
-    bank: "Great Southern Bank",
-    accountName: "Goal Saver",
-    bankInitials: "GSB",
-    bankColor: "#006B4F",
-    baseRate: 0.10,
-    bonusRate: 4.90,
-    advertisedRate: 5.00,
-    balanceCap: 50_000,
-    conditions: [
-      {
-        type: "min_monthly_deposit",
-        amount: 100,
-        label: "Deposit $100+ per month",
-        shortLabel: "$100 deposit",
-      },
-      {
-        type: "balance_growth",
-        label: "Account balance must grow each month",
-        shortLabel: "Balance grows",
-      },
-    ],
-    notes: [
-      "Lower balance cap of $50,000",
-      "Straightforward conditions — good for smaller balances",
-    ],
-    sourceNote: "Great Southern Bank — rates approx. early 2025, verify at greatsouthernbank.com.au",
+    id: "westpac-life",
+    provider: "Westpac",
+    productName: "Life",
+    baseRatePa: 2.00,
+    bonusRatePa: 3.20,
+    totalMaxRatePa: 5.20,
+    introRatePa: undefined,
+    introMonths: undefined,
+    requiresLinkedAccount: false,
+    monthlyDepositRequirement: undefined,
+    monthlyCardPurchaseRequirement: 5,
+    monthlyGrowthRequirement: true,
+    withdrawalFlexibility: "growth-sensitive",
+    conditionComplexityScore: 3,
+    sourceUrl: "https://www.westpac.com.au/personal-banking/bank-accounts/savings/life/",
+    sourceLabel: "Official provider page",
+    lastChecked: "2025-03-01",
+    notes:
+      "2.00% base rate is earned regardless of conditions — useful protection if conditions " +
+      "are missed. Bonus requires 5+ card purchases AND positive balance growth each month. " +
+      "A Youth Bonus rate (for customers aged 18–29) may be available — check Westpac directly. " +
+      "Card purchases typically require a linked Westpac everyday account.",
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 4. ANZ Plus — Growth Saver
+  // Confidence: MEDIUM — based on publicly available ANZ Plus product information
+  // ──────────────────────────────────────────────────────────────────────────
+  {
+    id: "anz-plus-growth-saver",
+    provider: "ANZ Plus",
+    productName: "Growth Saver",
+    baseRatePa: 0.01,
+    bonusRatePa: 4.99,
+    totalMaxRatePa: 5.00,
+    introRatePa: undefined,
+    introMonths: undefined,
+    requiresLinkedAccount: false,
+    monthlyDepositRequirement: 10,
+    monthlyCardPurchaseRequirement: undefined,
+    monthlyGrowthRequirement: undefined,
+    withdrawalFlexibility: "growth-sensitive",
+    conditionComplexityScore: 2,
+    sourceUrl: "https://www.anz.com.au/plus/",
+    sourceLabel: "Official provider page",
+    lastChecked: "2025-03-01",
+    notes:
+      "ANZ Plus is a digital-only product (app-based). Bonus rate requires a minimum " +
+      "$10 monthly deposit AND no withdrawals during the month. " +
+      "ASSUMPTION: product may be named 'Save' rather than 'Growth Saver' — verify " +
+      "exact product name and current conditions at provider.",
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 5. Great Southern Bank — Home Saver
+  // Confidence: LOW — limited independent confirmation of exact conditions
+  // ──────────────────────────────────────────────────────────────────────────
+  {
+    id: "gsb-home-saver",
+    provider: "Great Southern Bank",
+    productName: "Home Saver",
+    baseRatePa: 0.25,
+    bonusRatePa: 4.75,
+    totalMaxRatePa: 5.00,
+    introRatePa: undefined,
+    introMonths: undefined,
+    requiresLinkedAccount: false,
+    monthlyDepositRequirement: 200,
+    monthlyCardPurchaseRequirement: undefined,
+    monthlyGrowthRequirement: true,
+    capAmount: undefined,
+    withdrawalFlexibility: "growth-sensitive",
+    conditionComplexityScore: 3,
+    sourceUrl: "https://www.greatsouthernbank.com.au/savings-accounts/home-saver",
+    sourceLabel: "Official provider page",
+    lastChecked: "2025-03-01",
+    notes:
+      "ASSUMPTION: most fields are estimates — verify ALL at provider before use. " +
+      "This product may be specifically designed for home buyers / home loan holders. " +
+      "Monthly deposit requirement and growth requirement are inferred from similar GSB products.",
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 6. Great Southern Bank — Goal Saver
+  // Confidence: MEDIUM-HIGH — independently documented in multiple public sources
+  // ──────────────────────────────────────────────────────────────────────────
+  {
+    id: "gsb-goal-saver",
+    provider: "Great Southern Bank",
+    productName: "Goal Saver",
+    baseRatePa: 0.10,
+    bonusRatePa: 4.90,
+    totalMaxRatePa: 5.00,
+    introRatePa: undefined,
+    introMonths: undefined,
+    requiresLinkedAccount: false,
+    monthlyDepositRequirement: 100,
+    monthlyCardPurchaseRequirement: undefined,
+    monthlyGrowthRequirement: true,
+    capAmount: 50_000,
+    withdrawalFlexibility: "growth-sensitive",
+    conditionComplexityScore: 3,
+    sourceUrl: "https://www.greatsouthernbank.com.au/savings-accounts/goal-saver",
+    sourceLabel: "Official provider page",
+    lastChecked: "2025-03-01",
+    notes:
+      "Bonus rate applies on balances up to $50,000. Balances above the cap earn the base rate. " +
+      "Good for smaller balances with straightforward conditions. " +
+      "ASSUMPTION: cap of $50,000 based on publicly cited figures — verify at provider.",
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 7. Great Southern Bank — Future Saver
+  // Confidence: LOW — limited independent confirmation of exact conditions
+  // ──────────────────────────────────────────────────────────────────────────
+  {
+    id: "gsb-future-saver",
+    provider: "Great Southern Bank",
+    productName: "Future Saver",
+    baseRatePa: 0.10,
+    bonusRatePa: 4.90,
+    totalMaxRatePa: 5.00,
+    introRatePa: undefined,
+    introMonths: undefined,
+    requiresLinkedAccount: false,
+    monthlyDepositRequirement: 50,
+    monthlyCardPurchaseRequirement: undefined,
+    monthlyGrowthRequirement: true,
+    ageMin: undefined,
+    ageMax: 35,
+    capAmount: 50_000,
+    withdrawalFlexibility: "growth-sensitive",
+    conditionComplexityScore: 4,
+    sourceUrl: "https://www.greatsouthernbank.com.au/savings-accounts/future-saver",
+    sourceLabel: "Official provider page",
+    lastChecked: "2025-03-01",
+    notes:
+      "ASSUMPTION: most fields are estimates — verify ALL at provider before use. " +
+      "Product appears to be targeted at younger savers (inferred from name and positioning). " +
+      "Age maximum of 35 is an assumption — actual age restriction may differ or not exist. " +
+      "Monthly deposit threshold is estimated from similar GSB products.",
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 8. Great Southern Bank — Everyday Saver
+  // Confidence: LOW — limited independent confirmation of exact conditions
+  // ──────────────────────────────────────────────────────────────────────────
+  {
+    id: "gsb-everyday-saver",
+    provider: "Great Southern Bank",
+    productName: "Everyday Saver",
+    baseRatePa: 0.50,
+    bonusRatePa: undefined,
+    totalMaxRatePa: 0.50,
+    introRatePa: undefined,
+    introMonths: undefined,
+    requiresLinkedAccount: false,
+    monthlyDepositRequirement: undefined,
+    monthlyCardPurchaseRequirement: undefined,
+    monthlyGrowthRequirement: undefined,
+    capAmount: undefined,
+    withdrawalFlexibility: "full",
+    conditionComplexityScore: 1,
+    sourceUrl: "https://www.greatsouthernbank.com.au/savings-accounts/everyday-saver",
+    sourceLabel: "Official provider page",
+    lastChecked: "2025-03-01",
+    notes:
+      "ASSUMPTION: most fields are estimates. This is modelled as a flexible at-call " +
+      "account with no bonus conditions — suitable for transactional savings use. " +
+      "Base rate of 0.50% is an estimate and may not reflect the current offer.",
   },
 ];

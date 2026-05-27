@@ -1,7 +1,7 @@
-import type { SavingsAccount } from "@/types/accounts";
+import type { SavingsAccountOffer } from "@/types/accounts";
 import type { AccountResult } from "@/types/ranking";
 import type { UserProfile } from "@/types/user";
-import { checkCondition } from "./eligibility";
+import { checkAllConditions, deriveEligibilityStatus } from "./eligibility";
 import { buildExplanation } from "./explanation";
 import {
   computeAnnualInterest,
@@ -10,89 +10,72 @@ import {
 } from "./interest";
 
 /**
- * Runs the full analysis pipeline for one account against one user profile.
+ * Runs the full analysis pipeline for one offer against one user profile.
  * Deterministic: same inputs always produce identical outputs.
  */
-export function analyzeAccount(
-  account: SavingsAccount,
+export function analyzeOffer(
+  offer: SavingsAccountOffer,
   profile: UserProfile
 ): AccountResult {
-  const conditionChecks = account.conditions.map((c) =>
-    checkCondition(c, profile)
-  );
-
-  const allBonusConditionsMet =
-    conditionChecks.length === 0 || conditionChecks.every((c) => c.met);
-  const conditionsMetCount = conditionChecks.filter((c) => c.met).length;
-  const totalConditions = conditionChecks.length;
-  const eligibilityScore =
-    totalConditions === 0
-      ? 100
-      : Math.round((conditionsMetCount / totalConditions) * 100);
+  const conditionChecks = checkAllConditions(offer, profile);
+  const eligibilityStatus = deriveEligibilityStatus(conditionChecks);
 
   const isIntroApplicable = !!(
-    account.introRate &&
-    account.introMonths &&
-    profile.isNewCustomer
+    offer.introRatePa &&
+    offer.introMonths &&
+    profile.isNewCustomerForIntro
   );
 
-  const effectiveBalance = computeEffectiveBalance(account, profile.currentBalance);
-  const balanceExceedsCap = !!(
-    account.balanceCap && profile.currentBalance > account.balanceCap
-  );
+  const effectiveBalance = computeEffectiveBalance(offer, profile.balance);
+  const balanceAboveCap = !!(offer.capAmount && profile.balance > offer.capAmount);
 
-  const estimatedRate = computeEstimatedRate(
-    account,
-    allBonusConditionsMet,
+  const estimatedRatePa = computeEstimatedRate(
+    offer,
+    eligibilityStatus,
     isIntroApplicable
   );
-  const estimatedAnnualInterest = computeAnnualInterest(effectiveBalance, estimatedRate);
+  const estimatedAnnualInterest = computeAnnualInterest(effectiveBalance, estimatedRatePa);
 
   const gapActions = conditionChecks
-    .filter((c) => !c.met && c.gapAction)
+    .filter((c) => c.gapAction)
     .map((c) => c.gapAction!);
 
   const explanation = buildExplanation(
-    account,
+    offer,
     conditionChecks,
-    allBonusConditionsMet,
-    conditionsMetCount,
-    totalConditions,
-    estimatedRate,
+    eligibilityStatus,
+    estimatedRatePa,
     isIntroApplicable,
-    balanceExceedsCap
+    balanceAboveCap
   );
 
   return {
-    account,
+    offer,
     conditionChecks,
-    allBonusConditionsMet,
-    conditionsMetCount,
-    totalConditions,
-    eligibilityScore,
-    estimatedRate,
+    eligibilityStatus,
+    estimatedRatePa,
     estimatedAnnualInterest,
     isIntroApplicable,
-    balanceExceedsCap,
+    balanceAboveCap,
     gapActions,
     explanation,
   };
 }
 
 /**
- * Ranks all accounts by estimated annual interest (highest first).
- * Tiebreaks on eligibility score so accounts closest to qualifying rank higher.
+ * Ranks all offers by estimated annual interest (highest first).
+ * Tiebreaks on totalMaxRatePa, giving accounts with higher potential a boost.
  */
-export function rankAccounts(
-  accounts: SavingsAccount[],
+export function rankOffers(
+  offers: SavingsAccountOffer[],
   profile: UserProfile
 ): AccountResult[] {
-  return accounts
-    .map((account) => analyzeAccount(account, profile))
+  return offers
+    .map((offer) => analyzeOffer(offer, profile))
     .sort((a, b) => {
       if (Math.abs(b.estimatedAnnualInterest - a.estimatedAnnualInterest) > 0.01) {
         return b.estimatedAnnualInterest - a.estimatedAnnualInterest;
       }
-      return b.eligibilityScore - a.eligibilityScore;
+      return b.offer.totalMaxRatePa - a.offer.totalMaxRatePa;
     });
 }

@@ -1,47 +1,64 @@
-import type { SavingsAccount } from "@/types/accounts";
+import type { EligibilityStatus, SavingsAccountOffer } from "@/types/accounts";
 import type { ConditionCheck } from "@/types/ranking";
 
 /**
- * Builds a deterministic plain-English explanation of why a user would or
- * wouldn't earn the bonus rate on a given account.
- *
- * This is the fallback for the AI explanation panel — always present,
- * always accurate, never hallucinates.
+ * Builds a deterministic plain-English explanation of the account result.
+ * This is the always-present fallback — the AI panel (Phase 3) can optionally
+ * enhance it, but this version is always accurate and never hallucinates.
  */
 export function buildExplanation(
-  account: SavingsAccount,
+  offer: SavingsAccountOffer,
   conditionChecks: ConditionCheck[],
-  allMet: boolean,
-  metCount: number,
-  total: number,
-  estimatedRate: number,
+  eligibilityStatus: EligibilityStatus,
+  estimatedRatePa: number,
   isIntroApplicable: boolean,
-  balanceExceedsCap: boolean
+  balanceAboveCap: boolean
 ): string {
+  const totalConditions = conditionChecks.filter(
+    (c) => c.conditionKey !== "withdrawal_flexibility"
+  ).length;
+  const metCount = conditionChecks.filter(
+    (c) => c.status === "likely_eligible" && c.conditionKey !== "withdrawal_flexibility"
+  ).length;
+
   let text: string;
 
-  if (total === 0 && isIntroApplicable) {
-    text = `As a new customer, you'd earn ${account.introRate}% p.a. for the first ${account.introMonths} months, then ${account.baseRate}% p.a. automatically — no ongoing conditions required.`;
-  } else if (total === 0) {
-    text = `No ongoing conditions needed. You earn ${account.baseRate}% p.a. automatically.`;
-  } else if (allMet) {
-    text = `You meet all ${total} condition${total !== 1 ? "s" : ""} — you'd earn the full ${estimatedRate.toFixed(2)}% p.a.`;
+  if (totalConditions === 0 && isIntroApplicable) {
+    text =
+      `As a new customer, you'd earn ${offer.introRatePa}% p.a. for the first ` +
+      `${offer.introMonths} months, then ${offer.baseRatePa}% p.a. automatically ` +
+      `— no ongoing conditions required.`;
+  } else if (totalConditions === 0) {
+    text = `No ongoing conditions needed — you'd earn ${offer.baseRatePa}% p.a. automatically.`;
+  } else if (eligibilityStatus === "likely_eligible") {
+    text =
+      `You meet all ${totalConditions} condition${totalConditions !== 1 ? "s" : ""} ` +
+      `— you'd earn the full ${estimatedRatePa.toFixed(2)}% p.a.`;
+  } else if (eligibilityStatus === "at_risk") {
+    const atRiskChecks = conditionChecks.filter((c) => c.status === "at_risk");
+    const riskLabels = atRiskChecks.map((c) => c.label).join(", ");
+    text =
+      `You meet ${metCount} of ${totalConditions} condition${totalConditions !== 1 ? "s" : ""} ` +
+      `but are at risk on: ${riskLabels}. You'd likely earn only the base rate of ` +
+      `${offer.baseRatePa}% p.a. if these conditions aren't consistently met.`;
   } else {
-    const unmet = total - metCount;
-    const unmetLabels = conditionChecks
-      .filter((c) => !c.met)
-      .map((c) => c.condition.shortLabel)
-      .join(", ");
-
+    const unmetChecks = conditionChecks.filter((c) => c.status === "not_eligible");
+    const unmetLabels = unmetChecks.map((c) => c.label).join(", ");
     if (metCount === 0) {
-      text = `You don't currently meet any of the ${total} conditions, so you'd only earn the base rate of ${account.baseRate}% p.a. Missing: ${unmetLabels}.`;
+      text =
+        `You don't currently meet any of the ${totalConditions} condition${totalConditions !== 1 ? "s" : ""} ` +
+        `— you'd only earn the base rate of ${offer.baseRatePa}% p.a. ` +
+        `Missing: ${unmetLabels}.`;
     } else {
-      text = `You meet ${metCount} of ${total} conditions. Missing ${unmet} (${unmetLabels}) means you'd only earn the base rate of ${account.baseRate}% p.a.`;
+      text =
+        `You meet ${metCount} of ${totalConditions} conditions, but ${unmetLabels} ` +
+        `prevent you from earning the bonus. You'd earn only the base rate of ` +
+        `${offer.baseRatePa}% p.a.`;
     }
   }
 
-  if (balanceExceedsCap) {
-    text += ` Note: only $${account.balanceCap?.toLocaleString()} of your balance earns the bonus rate.`;
+  if (balanceAboveCap && offer.capAmount) {
+    text += ` Note: only the first $${offer.capAmount.toLocaleString()} of your balance earns the bonus rate.`;
   }
 
   return text;

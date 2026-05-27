@@ -1,127 +1,145 @@
 import { describe, expect, it } from "vitest";
-import { analyzeAccount, rankAccounts } from "@/lib/ranking";
-import type { SavingsAccount } from "@/types/accounts";
+import { analyzeOffer, rankOffers } from "@/lib/ranking";
+import type { SavingsAccountOffer } from "@/types/accounts";
 import type { UserProfile } from "@/types/user";
 
-const HIGH_BONUS_ACCOUNT: SavingsAccount = {
+const HIGH_BONUS_OFFER: SavingsAccountOffer = {
   id: "high-bonus",
-  bank: "Test Bank",
-  accountName: "High Bonus",
-  bankInitials: "HB",
-  bankColor: "#000",
-  baseRate: 0.5,
-  bonusRate: 5.0,
-  advertisedRate: 5.5,
-  balanceCap: 100_000,
-  conditions: [
-    { type: "min_monthly_deposit", amount: 1_000, label: "Deposit $1k", shortLabel: "$1k deposit" },
-    { type: "min_card_transactions", count: 5, label: "5+ txns", shortLabel: "5+ txns" },
-  ],
-  notes: [],
-  sourceNote: "Test data",
+  provider: "Test Bank",
+  productName: "High Bonus",
+  baseRatePa: 0.5,
+  bonusRatePa: 5.0,
+  totalMaxRatePa: 5.5,
+  requiresLinkedAccount: false,
+  monthlyDepositRequirement: 1_000,
+  monthlyCardPurchaseRequirement: 5,
+  capAmount: 100_000,
+  withdrawalFlexibility: "growth-sensitive",
+  conditionComplexityScore: 4,
+  sourceUrl: "https://example.com",
+  sourceLabel: "Official provider page",
+  lastChecked: "2025-01-01",
 };
 
-const NO_CONDITIONS_ACCOUNT: SavingsAccount = {
+const NO_CONDITIONS_OFFER: SavingsAccountOffer = {
   id: "no-conditions",
-  bank: "Easy Bank",
-  accountName: "Base Rate",
-  bankInitials: "EB",
-  bankColor: "#000",
-  baseRate: 4.0,
-  bonusRate: 0,
-  advertisedRate: 4.0,
-  conditions: [],
-  notes: [],
-  sourceNote: "Test data",
+  provider: "Easy Bank",
+  productName: "Base Rate",
+  baseRatePa: 4.0,
+  totalMaxRatePa: 4.0,
+  requiresLinkedAccount: false,
+  withdrawalFlexibility: "full",
+  conditionComplexityScore: 1,
+  sourceUrl: "https://example.com",
+  sourceLabel: "Official provider page",
+  lastChecked: "2025-01-01",
 };
 
 const ELIGIBLE_PROFILE: UserProfile = {
   age: 30,
-  currentBalance: 50_000,
-  monthlyDeposit: 2_000,
-  monthlyCardTransactions: 10,
-  balanceWillGrow: true,
-  willingToLinkAccount: true,
-  isNewCustomer: false,
+  balance: 50_000,
+  currentRatePa: 3.0,
+  monthlyExternalDeposit: 2_000,
+  monthlyCardPurchases: 10,
+  monthlyNetSavingsGrowth: 1_500,
+  willingToOpenLinkedAccount: true,
+  wantsFlexibleWithdrawals: false,
+  isNewCustomerForIntro: false,
 };
 
 const INELIGIBLE_PROFILE: UserProfile = {
   age: 30,
-  currentBalance: 50_000,
-  monthlyDeposit: 0,
-  monthlyCardTransactions: 0,
-  balanceWillGrow: false,
-  willingToLinkAccount: false,
-  isNewCustomer: false,
+  balance: 50_000,
+  currentRatePa: 0.5,
+  monthlyExternalDeposit: 0,
+  monthlyCardPurchases: 0,
+  monthlyNetSavingsGrowth: -500,
+  willingToOpenLinkedAccount: false,
+  wantsFlexibleWithdrawals: true,
+  isNewCustomerForIntro: false,
 };
 
-describe("analyzeAccount", () => {
-  it("eligible profile earns full advertised rate", () => {
-    const result = analyzeAccount(HIGH_BONUS_ACCOUNT, ELIGIBLE_PROFILE);
-    expect(result.allBonusConditionsMet).toBe(true);
-    expect(result.eligibilityScore).toBe(100);
-    expect(result.estimatedRate).toBeCloseTo(5.5);
+// ── analyzeOffer ──────────────────────────────────────────────────────────────
+
+describe("analyzeOffer", () => {
+  it("eligible profile → likely_eligible, earns full rate", () => {
+    const result = analyzeOffer(HIGH_BONUS_OFFER, ELIGIBLE_PROFILE);
+    expect(result.eligibilityStatus).toBe("likely_eligible");
+    expect(result.estimatedRatePa).toBeCloseTo(5.5);
   });
 
-  it("ineligible profile earns only base rate", () => {
-    const result = analyzeAccount(HIGH_BONUS_ACCOUNT, INELIGIBLE_PROFILE);
-    expect(result.allBonusConditionsMet).toBe(false);
-    expect(result.estimatedRate).toBeCloseTo(0.5);
+  it("ineligible profile → not_eligible, earns only base rate", () => {
+    const result = analyzeOffer(HIGH_BONUS_OFFER, INELIGIBLE_PROFILE);
+    expect(result.eligibilityStatus).toBe("not_eligible");
+    expect(result.estimatedRatePa).toBeCloseTo(0.5);
   });
 
-  it("gapActions includes actionable steps for unmet conditions", () => {
-    const result = analyzeAccount(HIGH_BONUS_ACCOUNT, INELIGIBLE_PROFILE);
+  it("no-conditions offer → always likely_eligible", () => {
+    const result = analyzeOffer(NO_CONDITIONS_OFFER, INELIGIBLE_PROFILE);
+    expect(result.eligibilityStatus).toBe("likely_eligible");
+    expect(result.estimatedRatePa).toBeCloseTo(4.0);
+  });
+
+  it("gapActions populated when conditions are not met", () => {
+    const result = analyzeOffer(HIGH_BONUS_OFFER, INELIGIBLE_PROFILE);
     expect(result.gapActions.length).toBeGreaterThan(0);
     expect(result.gapActions.some((a) => a.includes("1,000"))).toBe(true);
   });
 
-  it("balanceExceedsCap is flagged correctly", () => {
-    const bigBalance = { ...ELIGIBLE_PROFILE, currentBalance: 150_000 };
-    const result = analyzeAccount(HIGH_BONUS_ACCOUNT, bigBalance);
-    expect(result.balanceExceedsCap).toBe(true);
-    // Interest computed on cap, not full balance
+  it("balanceAboveCap flagged, interest computed on cap not full balance", () => {
+    const bigBalance: UserProfile = { ...ELIGIBLE_PROFILE, balance: 150_000 };
+    const result = analyzeOffer(HIGH_BONUS_OFFER, bigBalance);
+    expect(result.balanceAboveCap).toBe(true);
+    // effective balance capped at $100k
     expect(result.estimatedAnnualInterest).toBeCloseTo((100_000 * 5.5) / 100);
   });
 
-  it("no-conditions account is always 100% eligible", () => {
-    const result = analyzeAccount(NO_CONDITIONS_ACCOUNT, INELIGIBLE_PROFILE);
-    expect(result.eligibilityScore).toBe(100);
-    expect(result.allBonusConditionsMet).toBe(true);
+  it("isIntroApplicable when offer has intro and user is new customer", () => {
+    const introOffer: SavingsAccountOffer = {
+      ...NO_CONDITIONS_OFFER,
+      introRatePa: 5.5,
+      introMonths: 4,
+    };
+    const newCustomer: UserProfile = { ...ELIGIBLE_PROFILE, isNewCustomerForIntro: true };
+    const result = analyzeOffer(introOffer, newCustomer);
+    expect(result.isIntroApplicable).toBe(true);
+    // blended: (5.5 * 4 + 4.0 * 8) / 12
+    const expected = (5.5 * 4 + 4.0 * 8) / 12;
+    expect(result.estimatedRatePa).toBeCloseTo(expected, 4);
+  });
+
+  it("explanation is a non-empty string", () => {
+    const result = analyzeOffer(HIGH_BONUS_OFFER, ELIGIBLE_PROFILE);
+    expect(typeof result.explanation).toBe("string");
+    expect(result.explanation.length).toBeGreaterThan(10);
   });
 });
 
-describe("rankAccounts", () => {
-  it("eligible-for-bonus account ranks above no-conditions account when it earns more", () => {
-    const results = rankAccounts(
-      [HIGH_BONUS_ACCOUNT, NO_CONDITIONS_ACCOUNT],
-      ELIGIBLE_PROFILE
-    );
-    // 5.5% on $50k = $2,750 > 4.0% on $50k = $2,000
-    expect(results[0].account.id).toBe("high-bonus");
+// ── rankOffers ────────────────────────────────────────────────────────────────
+
+describe("rankOffers", () => {
+  it("eligible-for-bonus account ranks first when it earns more", () => {
+    // HIGH_BONUS eligible: 5.5% × $50k = $2,750 > 4% × $50k = $2,000
+    const results = rankOffers([HIGH_BONUS_OFFER, NO_CONDITIONS_OFFER], ELIGIBLE_PROFILE);
+    expect(results[0].offer.id).toBe("high-bonus");
   });
 
-  it("no-conditions account ranks above bonus account when user is ineligible", () => {
-    const results = rankAccounts(
-      [HIGH_BONUS_ACCOUNT, NO_CONDITIONS_ACCOUNT],
-      INELIGIBLE_PROFILE
-    );
-    // HIGH_BONUS earns 0.5% base; no-conditions earns 4.0%
-    expect(results[0].account.id).toBe("no-conditions");
+  it("no-conditions account ranks first when user is ineligible for bonus", () => {
+    // HIGH_BONUS base: 0.5% × $50k = $250 < 4% × $50k = $2,000
+    const results = rankOffers([HIGH_BONUS_OFFER, NO_CONDITIONS_OFFER], INELIGIBLE_PROFILE);
+    expect(results[0].offer.id).toBe("no-conditions");
   });
 
-  it("returns same count as input", () => {
-    const results = rankAccounts(
-      [HIGH_BONUS_ACCOUNT, NO_CONDITIONS_ACCOUNT],
-      ELIGIBLE_PROFILE
-    );
+  it("returns the same number of results as input offers", () => {
+    const results = rankOffers([HIGH_BONUS_OFFER, NO_CONDITIONS_OFFER], ELIGIBLE_PROFILE);
     expect(results).toHaveLength(2);
   });
 
-  it("is deterministic — same inputs always yield same output", () => {
-    const r1 = rankAccounts([HIGH_BONUS_ACCOUNT, NO_CONDITIONS_ACCOUNT], ELIGIBLE_PROFILE);
-    const r2 = rankAccounts([HIGH_BONUS_ACCOUNT, NO_CONDITIONS_ACCOUNT], ELIGIBLE_PROFILE);
-    expect(r1[0].account.id).toBe(r2[0].account.id);
-    expect(r1[0].estimatedRate).toBe(r2[0].estimatedRate);
+  it("is deterministic — same inputs produce same order and values", () => {
+    const r1 = rankOffers([HIGH_BONUS_OFFER, NO_CONDITIONS_OFFER], ELIGIBLE_PROFILE);
+    const r2 = rankOffers([HIGH_BONUS_OFFER, NO_CONDITIONS_OFFER], ELIGIBLE_PROFILE);
+    expect(r1[0].offer.id).toBe(r2[0].offer.id);
+    expect(r1[0].estimatedRatePa).toBe(r2[0].estimatedRatePa);
     expect(r1[0].estimatedAnnualInterest).toBe(r2[0].estimatedAnnualInterest);
   });
 });

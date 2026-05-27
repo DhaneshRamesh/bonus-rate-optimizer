@@ -1,46 +1,52 @@
-import type { SavingsAccount } from "@/types/accounts";
+import type { EligibilityStatus, SavingsAccountOffer } from "@/types/accounts";
 
 /**
  * Returns the portion of the user's balance that earns the bonus rate.
- * If the account has a cap, balances above the cap earn base rate only.
+ * Balances above the cap earn the base rate only.
  */
 export function computeEffectiveBalance(
-  account: SavingsAccount,
-  currentBalance: number
+  offer: SavingsAccountOffer,
+  balance: number
 ): number {
-  return account.balanceCap
-    ? Math.min(currentBalance, account.balanceCap)
-    : currentBalance;
+  return offer.capAmount ? Math.min(balance, offer.capAmount) : balance;
 }
 
 /**
- * Returns the effective annual rate a user would earn given their eligibility.
+ * Returns the effective annual rate the user would earn given their eligibility.
  *
- * For accounts with an intro period (and an eligible new customer), the rate is
- * blended across the year: introRate for introMonths, then postIntroRate for the
- * remainder. This slightly overstates Year 1 for partial-year starts — documented
- * as a known assumption in the README.
+ * For intro-rate accounts where the user is a new customer, the rate is blended
+ * across a full year: introRate for introMonths, then the post-intro rate for
+ * the remainder. This slightly overstates Year 1 for mid-year starts — noted
+ * as a known modelling assumption.
+ *
+ * "likely_eligible" → earns base + bonus (or intro if applicable)
+ * "at_risk" / "not_eligible" → earns base rate only
  */
 export function computeEstimatedRate(
-  account: SavingsAccount,
-  allBonusConditionsMet: boolean,
+  offer: SavingsAccountOffer,
+  eligibilityStatus: EligibilityStatus,
   isIntroApplicable: boolean
 ): number {
-  if (isIntroApplicable) {
-    const introMonths = account.introMonths!;
-    const postIntroRate = allBonusConditionsMet
-      ? account.baseRate + account.bonusRate
-      : account.baseRate;
-    return (account.introRate! * introMonths + postIntroRate * (12 - introMonths)) / 12;
+  const earnsBonus = eligibilityStatus === "likely_eligible";
+
+  if (isIntroApplicable && offer.introRatePa && offer.introMonths) {
+    const postIntroRate = earnsBonus
+      ? offer.baseRatePa + (offer.bonusRatePa ?? 0)
+      : offer.baseRatePa;
+    return (
+      (offer.introRatePa * offer.introMonths +
+        postIntroRate * (12 - offer.introMonths)) /
+      12
+    );
   }
 
-  return allBonusConditionsMet
-    ? account.baseRate + account.bonusRate
-    : account.baseRate;
+  return earnsBonus
+    ? offer.baseRatePa + (offer.bonusRatePa ?? 0)
+    : offer.baseRatePa;
 }
 
 /**
- * Computes estimated annual interest in AUD.
+ * Estimates annual interest in AUD.
  * Uses a simple non-compounding model: interest = balance × rate / 100.
  */
 export function computeAnnualInterest(

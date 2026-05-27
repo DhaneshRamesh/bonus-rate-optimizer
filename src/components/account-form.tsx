@@ -8,17 +8,17 @@ interface AccountFormProps {
 }
 
 /**
- * TODO Phase 2: Profile input form.
- * Sliders for age, balance, monthly deposit, card transactions.
- * Toggles for balance growth, linked account willingness, new customer status.
+ * TODO Phase 3: Profile input form.
+ * Sliders for age, balance, currentRatePa, monthlyExternalDeposit,
+ * monthlyCardPurchases, monthlyNetSavingsGrowth.
+ * Toggles for willingToOpenLinkedAccount, wantsFlexibleWithdrawals,
+ * isNewCustomerForIntro.
  */
 export function AccountForm({ profile: _profile, onChange: _onChange }: AccountFormProps) {
   return (
     <aside className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h2 className="font-semibold text-foreground mb-1">Your Profile</h2>
-      <p className="text-xs text-muted-foreground">
-        Form inputs — coming in Phase 2
-      </p>
+      <p className="text-xs text-muted-foreground">Form inputs — coming in Phase 3</p>
     </aside>
   );
 }
