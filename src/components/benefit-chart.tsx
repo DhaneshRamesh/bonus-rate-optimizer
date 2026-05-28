@@ -50,12 +50,12 @@ export function BenefitChart({ results, selectedId, onSelect }: BenefitChartProp
   };
 
   return (
-    <div className="rounded-3xl border border-stone-200 bg-white p-6">
+    <div className="rounded-3xl border border-border bg-card p-6">
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-stone-900">
+        <h3 className="text-sm font-semibold text-foreground">
           Annual gain vs your current rate
         </h3>
-        <p className="text-xs text-stone-400 mt-0.5">
+        <p className="text-xs text-foreground/60 mt-0.5">
           Click a bar to select that account
         </p>
       </div>
@@ -66,13 +66,13 @@ export function BenefitChart({ results, selectedId, onSelect }: BenefitChartProp
           margin={{ top: 0, right: 60, left: 8, bottom: 0 }}
           barSize={18}
         >
-          <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#f3f4f6" />
+          <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#F6D7AE" />
           <XAxis
             type="number"
             tickFormatter={(v) =>
               v === 0 ? "$0" : `${v > 0 ? "+" : ""}$${Math.abs(v).toLocaleString("en-AU")}`
             }
-            tick={{ fontSize: 11, fill: "#9ca3af" }}
+            tick={{ fontSize: 11, fill: "#8B5E3C" }}
             axisLine={false}
             tickLine={false}
           />
@@ -80,7 +80,7 @@ export function BenefitChart({ results, selectedId, onSelect }: BenefitChartProp
             type="category"
             dataKey="name"
             width={170}
-            tick={{ fontSize: 11, fill: "#6b7280" }}
+            tick={{ fontSize: 11, fill: "#6B4B35" }}
             axisLine={false}
             tickLine={false}
           />
@@ -96,10 +96,10 @@ export function BenefitChart({ results, selectedId, onSelect }: BenefitChartProp
             contentStyle={{
               fontSize: 12,
               borderRadius: 8,
-              border: "1px solid #e5e7eb",
+              border: "1px solid #F2C28C",
             }}
           />
-          <ReferenceLine x={0} stroke="#d1d5db" strokeWidth={1} />
+          <ReferenceLine x={0} stroke="#E2B887" strokeWidth={1} />
           <Bar
             dataKey="value"
             radius={[0, 4, 4, 0]}

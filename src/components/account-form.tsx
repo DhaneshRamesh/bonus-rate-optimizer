@@ -39,8 +39,8 @@ function SliderField({
   return (
     <div className="space-y-2">
       <div className="flex items-baseline justify-between">
-        <label className="text-sm font-medium text-stone-800">{label}</label>
-        <span className="text-sm font-semibold text-orange-600 tabular-nums">
+        <label className="text-sm font-medium text-foreground">{label}</label>
+        <span className="text-sm font-semibold text-foreground tabular-nums">
           {displayValue}
         </span>
       </div>
@@ -54,10 +54,10 @@ function SliderField({
         className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
         style={{
           accentColor: "#F97316",
-          background: `linear-gradient(to right, #F97316 ${((value - min) / (max - min)) * 100}%, #e5e7eb ${((value - min) / (max - min)) * 100}%)`,
+          background: `linear-gradient(to right, #F97316 ${((value - min) / (max - min)) * 100}%, #F3D5B0 ${((value - min) / (max - min)) * 100}%)`,
         }}
       />
-      <p className="text-xs text-stone-400 leading-snug">{micro}</p>
+      <p className="text-xs text-foreground/60 leading-snug">{micro}</p>
     </div>
   );
 }
@@ -71,22 +71,22 @@ interface ToggleFieldProps {
 
 function ToggleField({ label, micro, value, onChange }: ToggleFieldProps) {
   return (
-    <div className="flex items-start justify-between gap-4 py-3 border-b border-stone-100 last:border-0">
+    <div className="flex items-start justify-between gap-4 py-3 border-b border-border last:border-0">
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-stone-800 leading-snug">{label}</p>
-        <p className="text-xs text-stone-400 mt-0.5 leading-snug">{micro}</p>
+        <p className="text-sm font-medium text-foreground leading-snug">{label}</p>
+        <p className="text-xs text-foreground/60 mt-0.5 leading-snug">{micro}</p>
       </div>
       <button
         type="button"
         role="switch"
         aria-checked={value}
         onClick={() => onChange(!value)}
-        className={`relative flex-shrink-0 w-10 h-6 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 ${
-          value ? "bg-orange-500" : "bg-stone-200"
+        className={`relative flex-shrink-0 w-10 h-6 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+          value ? "bg-primary text-primary-foreground" : "bg-muted"
         }`}
       >
         <span
-          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-card transition-transform duration-200 ${
             value ? "translate-x-4" : "translate-x-0"
           }`}
         />
@@ -100,15 +100,12 @@ export function AccountForm({ profile, onChange }: AccountFormProps) {
     onChange({ ...profile, [key]: value });
 
   return (
-    <aside
-      id="form"
-      className="rounded-3xl border border-stone-200 bg-white p-6 shadow-sm space-y-6"
-    >
+    <aside id="form" className="rounded-3xl border border-border bg-card p-6 space-y-6">
       <div>
-        <h2 className="text-base font-semibold text-stone-900 mb-0.5">
+        <h2 className="text-base font-semibold text-foreground mb-0.5">
           Your profile
         </h2>
-        <p className="text-xs text-stone-400">
+        <p className="text-xs text-foreground/60">
           Drag the sliders — results update instantly.
         </p>
       </div>
@@ -180,7 +177,7 @@ export function AccountForm({ profile, onChange }: AccountFormProps) {
         />
       </div>
 
-      <div className="border-t border-stone-100 pt-4 space-y-0">
+      <div className="border-t border-border pt-4 space-y-0">
         <ToggleField
           label="Willing to open a linked transaction account"
           micro="Required by some providers to unlock the bonus rate"

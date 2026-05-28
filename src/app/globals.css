@@ -49,51 +49,57 @@
 }
 
 :root {
-  /* Open-style palette: warm cream bg, peach-orange primary, charcoal text */
-  --background: oklch(0.99 0.008 75);
-  --foreground: oklch(0.16 0.008 60);
+  /* Premium Light Theme (Warm Orange) */
+  --background: #FFF7ED; /* orange-50 */
+  --foreground: #2A190D; /* warm espresso */
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.16 0.008 60);
+  --card: #FFFCF7;
+  --card-foreground: #2A190D;
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.16 0.008 60);
+  --popover: #FFFCF7;
+  --popover-foreground: #2A190D;
 
-  /* Peach-orange primary (#F97316) */
-  --primary: oklch(0.65 0.19 44);
-  --primary-foreground: oklch(1 0 0);
+  --primary: #F97316; /* orange-500 */
+  --primary-foreground: #1F120A;
 
-  --secondary: oklch(0.97 0.005 75);
-  --secondary-foreground: oklch(0.16 0.008 60);
+  --secondary: #FFEBD4; /* warm sand */
+  --secondary-foreground: #2A190D;
 
-  --muted: oklch(0.96 0.005 75);
-  --muted-foreground: oklch(0.50 0.01 60);
+  --muted: #FDEDD7;
+  --muted-foreground: #6B4B35;
 
-  --accent: oklch(0.96 0.012 60);
-  --accent-foreground: oklch(0.16 0.008 60);
+  --accent: #FDDDB5;
+  --accent-foreground: #2A190D;
 
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: #DC2626; /* red-600 */
 
-  --border: oklch(0.92 0.008 75);
-  --input: oklch(0.92 0.008 75);
-  --ring: oklch(0.65 0.19 44);
+  --border: #F2C28C;
+  --input: #E7B777;
+  --ring: #F97316;
 
-  --chart-1: oklch(0.65 0.19 44);
-  --chart-2: oklch(0.72 0.12 160);
-  --chart-3: oklch(0.60 0.18 250);
-  --chart-4: oklch(0.55 0.14 300);
-  --chart-5: oklch(0.45 0.10 30);
+  --chart-1: #F97316;
+  --chart-2: #FB923C;
+  --chart-3: #FDBA74;
+  --chart-4: #FED7AA;
+  --chart-5: #FFEDD5;
 
-  --radius: 0.75rem;
+  --radius: 1.5rem;
 
-  --sidebar: oklch(0.98 0.006 75);
-  --sidebar-foreground: oklch(0.16 0.008 60);
-  --sidebar-primary: oklch(0.65 0.19 44);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.96 0.012 60);
-  --sidebar-accent-foreground: oklch(0.16 0.008 60);
-  --sidebar-border: oklch(0.92 0.008 75);
-  --sidebar-ring: oklch(0.65 0.19 44);
+  --sidebar: #FFF7ED;
+  --sidebar-foreground: #2A190D;
+  --sidebar-primary: #F97316;
+  --sidebar-primary-foreground: #1F120A;
+  --sidebar-accent: #FDDDB5;
+  --sidebar-accent-foreground: #2A190D;
+  --sidebar-border: #F2C28C;
+  --sidebar-ring: #F97316;
+}
+
+.app-shell {
+  background:
+    radial-gradient(1200px circle at 10% -10%, rgba(255, 237, 213, 0.9), transparent 60%),
+    radial-gradient(900px circle at 90% -20%, rgba(255, 211, 162, 0.8), transparent 55%),
+    linear-gradient(180deg, #F9B15F 0%, #F59E0B 55%, #E07A2F 100%);
 }
 
 @layer base {

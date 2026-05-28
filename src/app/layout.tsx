@@ -26,41 +26,44 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background">
-        {/* Nav */}
-        <header className="sticky top-0 z-50 border-b border-border bg-white/90 backdrop-blur-sm">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-xs">O</span>
+      <body className="min-h-full flex flex-col app-shell p-2 sm:p-6 md:p-10">
+        <div className="flex-1 flex flex-col bg-card rounded-[2rem] sm:rounded-[3rem] overflow-hidden relative shadow-2xl ring-1 ring-border/40">
+          {/* Nav */}
+          <header className="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur-md">
+            <div className="max-w-5xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="font-bold text-foreground text-2xl tracking-tight flex items-center">
+                  <span className="relative inline-flex items-center justify-center">
+                    <span className="absolute w-[2px] h-full bg-background z-10 left-1/2 -translate-x-1/2"></span>
+                    O
+                  </span>
+                  pen.money
+                </span>
+                <span className="hidden sm:inline text-xs font-medium text-foreground/90 border border-border rounded-full px-3 py-1 ml-2">
+                  Optimizer
+                </span>
               </div>
-              <span className="font-semibold text-foreground text-sm">
-                Bonus Rate Optimizer
-              </span>
-              <span className="hidden sm:inline text-xs text-muted-foreground border border-border rounded-full px-2 py-0.5">
-                Concept Demo
-              </span>
+              <nav className="text-sm font-medium text-foreground/80">
+                <span>Concept Demo</span>
+              </nav>
             </div>
-            <nav className="text-sm text-muted-foreground">
-              <span>by Open</span>
-            </nav>
-          </div>
-        </header>
+          </header>
 
-        <main className="flex-1">{children}</main>
+          <main className="flex-1">{children}</main>
 
-        {/* Footer */}
-        <footer className="border-t border-border bg-white mt-8">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              <strong className="text-foreground">Concept demo only.</strong>{" "}
-              Estimated figures based on publicly available Australian savings
-              account information (~early 2025). Not financial advice. Verify
-              current terms with the provider before making any decisions. Open
-              does not currently offer this product.
-            </p>
-          </div>
-        </footer>
+          {/* Footer */}
+          <footer className="border-t border-border bg-card mt-12">
+            <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8">
+              <p className="text-sm text-foreground/70 leading-relaxed max-w-2xl">
+                <strong className="text-foreground">Concept demo only.</strong>{" "}
+                Estimated figures based on publicly available Australian savings
+                account information (~early 2025). Not financial advice. Verify
+                current terms with the provider before making any decisions. Open
+                does not currently offer this product.
+              </p>
+            </div>
+          </footer>
+        </div>
       </body>
     </html>
   );

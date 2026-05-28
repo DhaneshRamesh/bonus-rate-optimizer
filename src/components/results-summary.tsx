@@ -30,10 +30,10 @@ function CategoryCard({
   const isSelected = selectedId === ranked.account.id;
   const statusColor =
     ranked.eligibility.status === "likely_eligible"
-      ? "text-emerald-600"
+      ? "text-emerald-700 font-semibold"
       : ranked.eligibility.status === "at_risk"
-        ? "text-amber-600"
-        : "text-stone-400";
+        ? "text-amber-700 font-semibold"
+        : "text-foreground/60";
 
   return (
     <button
@@ -42,8 +42,8 @@ function CategoryCard({
       className={`text-left w-full rounded-2xl border p-5 transition-all ${
         isSelected
           ? "border-orange-400 shadow-md ring-1 ring-orange-300"
-          : "border-stone-200 hover:border-orange-300 hover:shadow-sm"
-      } bg-white`}
+          : "border-border hover:border-orange-300"
+      } bg-card`}
     >
       <div className="flex items-center justify-between mb-3">
         <span
@@ -53,19 +53,19 @@ function CategoryCard({
           {title}
         </span>
         {isSelected && (
-          <span className="text-xs font-medium text-orange-500">Selected ✓</span>
+          <span className="text-xs font-medium text-foreground">Selected ✓</span>
         )}
       </div>
-      <p className="text-sm font-semibold text-stone-900 leading-snug mb-0.5">
+      <p className="text-sm font-semibold text-foreground leading-snug mb-0.5">
         {ranked.account.provider}
       </p>
-      <p className="text-xs text-stone-500 mb-3">{ranked.account.productName}</p>
+      <p className="text-xs text-foreground/70 mb-3">{ranked.account.productName}</p>
       <div className="flex items-end gap-3">
         <div>
-          <p className="text-2xl font-bold text-stone-900 leading-none">
+          <p className="text-2xl font-bold text-foreground leading-none">
             {ranked.effectiveRatePa.toFixed(2)}%
           </p>
-          <p className="text-xs text-stone-400 mt-0.5">est. rate p.a.</p>
+          <p className="text-xs text-foreground/60 mt-0.5">est. rate p.a.</p>
         </div>
         <div className="mb-0.5">
           <p className={`text-sm font-semibold ${statusColor}`}>
@@ -75,7 +75,7 @@ function CategoryCard({
                 ? "At risk"
                 : "Base rate only"}
           </p>
-          <p className="text-xs text-stone-400">{subtitle}</p>
+          <p className="text-xs text-foreground/60">{subtitle}</p>
         </div>
       </div>
     </button>

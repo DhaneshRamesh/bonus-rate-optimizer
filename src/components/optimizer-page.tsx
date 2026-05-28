@@ -48,7 +48,7 @@ export function OptimizerPage() {
   const handleSelect = (id: string) => setSelectedId(id);
 
   return (
-    <div className="min-h-screen" style={{ background: "oklch(0.99 0.008 75)" }}>
+    <div className="min-h-screen">
       {/* Hero */}
       <div className="max-w-5xl mx-auto">
         <Hero />
@@ -56,8 +56,8 @@ export function OptimizerPage() {
 
       {/* Disclosure banner */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 mb-8">
-        <div className="rounded-2xl bg-amber-50 border border-amber-200 px-5 py-3 text-xs text-amber-800 leading-relaxed">
-          <span className="font-semibold">Concept demo · not financial advice · sample data only. </span>
+        <div className="rounded-2xl bg-card/80 border border-border/60 px-5 py-3 text-xs text-foreground/80 leading-relaxed">
+          <span className="font-semibold text-foreground">Concept demo · not financial advice · sample data only. </span>
           {buildDisclosureText()}
         </div>
       </div>
@@ -99,15 +99,15 @@ export function OptimizerPage() {
         />
 
         {/* Methodology + full disclosure footer */}
-        <div className="rounded-3xl border border-stone-200 bg-white p-6 space-y-4">
+        <div className="rounded-3xl border border-border bg-card p-6 space-y-4">
           <div>
-            <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">
+            <p className="text-xs font-semibold text-foreground/60 uppercase tracking-wide mb-2">
               How estimates are calculated
             </p>
-            <p className="text-sm text-stone-600 leading-relaxed">{buildMethodologyText()}</p>
+            <p className="text-sm text-foreground/80 leading-relaxed">{buildMethodologyText()}</p>
           </div>
-          <div className="pt-4 border-t border-stone-100">
-            <p className="text-xs text-stone-400 leading-relaxed">{buildDisclosureText()}</p>
+          <div className="pt-4 border-t border-border">
+            <p className="text-xs text-foreground/60 leading-relaxed">{buildDisclosureText()}</p>
           </div>
         </div>
       </div>
