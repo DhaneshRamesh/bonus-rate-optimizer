@@ -13,6 +13,39 @@ export interface EligibilityResult {
   warnings: string[];
 }
 
+/** A single account fully analysed and ranked against the user's profile. */
+export interface RankedAccount {
+  account: SavingsAccountOffer;
+  eligibility: EligibilityResult;
+  /** Estimated annual interest in AUD at the realistic rate (non-compounding). */
+  annualInterest: number;
+  /** Effective annual rate the user would realistically earn, in % p.a. */
+  effectiveRatePa: number;
+  /** annualInterest minus what the user currently earns at their currentRatePa. */
+  extraAnnualBenefit: number;
+  /** UI labels: "Best Match", "No Fuss", "Flexible Access", "Intro Rate", etc. */
+  categoryTags: string[];
+  /** Plain-English reasons why this account is or isn't a good fit. */
+  rankReasons: string[];
+  /** Things that could cause the user to miss the bonus or be worse off. */
+  risks: string[];
+  /** True when the account has no monthly behavioural conditions. */
+  isNoFuss: boolean;
+  /** True when withdrawalFlexibility is not "growth-sensitive". */
+  isFlexibleWithdrawals: boolean;
+}
+
+/** Return value of rankAccounts. */
+export interface RankAccountsResult {
+  overall: RankedAccount[];
+  /** Highest expected annual interest among non-hard-ineligible accounts. */
+  bestMaxReturn?: RankedAccount;
+  /** Highest interest among no-fuss (no monthly conditions) accounts. */
+  bestNoFuss?: RankedAccount;
+  /** Highest interest among accounts without growth-sensitive restrictions. */
+  bestFlexibleWithdrawals?: RankedAccount;
+}
+
 /** Result of evaluating one condition against the user's profile. */
 export interface ConditionCheck {
   conditionKey:

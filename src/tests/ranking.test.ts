@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { analyzeOffer, rankOffers } from "@/lib/ranking";
+import { analyzeOffer, rankAccounts, rankOffers } from "@/lib/ranking";
+import { ACCOUNTS } from "@/data/accounts";
 import type { SavingsAccountOffer } from "@/types/accounts";
 import type { UserProfile } from "@/types/user";
 
@@ -141,5 +142,184 @@ describe("rankOffers", () => {
     expect(r1[0].offer.id).toBe(r2[0].offer.id);
     expect(r1[0].estimatedRatePa).toBe(r2[0].estimatedRatePa);
     expect(r1[0].estimatedAnnualInterest).toBe(r2[0].estimatedAnnualInterest);
+  });
+});
+
+// ── rankAccounts fixtures ─────────────────────────────────────────────────────
+
+const SAMPLE_PROFILE: UserProfile = {
+  age: 28,
+  balance: 25_000,
+  currentRatePa: 3.5,
+  monthlyExternalDeposit: 1_000,
+  monthlyCardPurchases: 5,
+  monthlyNetSavingsGrowth: 300,
+  willingToOpenLinkedAccount: true,
+  wantsFlexibleWithdrawals: false,
+  isNewCustomerForIntro: false,
+};
+
+// User who fails all behavioural conditions — earns base rate only everywhere.
+const FAILS_ALL_PROFILE: UserProfile = {
+  age: 28,
+  balance: 25_000,
+  currentRatePa: 3.5,
+  monthlyExternalDeposit: 0,
+  monthlyCardPurchases: 0,
+  monthlyNetSavingsGrowth: -500,
+  willingToOpenLinkedAccount: false,
+  wantsFlexibleWithdrawals: false,
+  isNewCustomerForIntro: false,
+};
+
+// ── rankAccounts — bestMaxReturn ──────────────────────────────────────────────
+
+describe("rankAccounts — bestMaxReturn does not choose high-headline when conditions fail", () => {
+  it("Westpac Life (5.20% max) does not win when user fails card and growth conditions", () => {
+    const result = rankAccounts(ACCOUNTS, FAILS_ALL_PROFILE);
+    // Westpac earns only its 2% base; no-condition accounts should rank higher.
+    expect(result.bestMaxReturn?.account.id).not.toBe("westpac-life");
+  });
+
+  it("bestMaxReturn is a no-condition account when all conditional accounts fail", () => {
+    const result = rankAccounts(ACCOUNTS, FAILS_ALL_PROFILE);
+    // AMP or Macquarie (no conditions) should win since conditional accounts earn base rates.
+    expect(result.bestMaxReturn?.isNoFuss).toBe(true);
+  });
+
+  it("bestMaxReturn annualInterest beats all at_risk accounts for that user", () => {
+    const result = rankAccounts(ACCOUNTS, FAILS_ALL_PROFILE);
+    const winner = result.bestMaxReturn!;
+    result.overall
+      .filter((r) => r.eligibility.status !== "likely_eligible")
+      .forEach((r) => {
+        expect(winner.annualInterest).toBeGreaterThanOrEqual(r.annualInterest);
+      });
+  });
+
+  it("bestMaxReturn has 'Highest estimated return' in rankReasons", () => {
+    const result = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    expect(result.bestMaxReturn?.rankReasons.some((r) => r.includes("Highest estimated return"))).toBe(true);
+  });
+
+  it("bestMaxReturn has 'Best Match' category tag", () => {
+    const result = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    expect(result.bestMaxReturn?.categoryTags).toContain("Best Match");
+  });
+});
+
+// ── rankAccounts — bestNoFuss ─────────────────────────────────────────────────
+
+describe("rankAccounts — no-fuss category excludes conditioned accounts", () => {
+  it("bestNoFuss.isNoFuss is true", () => {
+    const result = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    expect(result.bestNoFuss?.isNoFuss).toBe(true);
+  });
+
+  it("bestNoFuss is not Westpac Life (requires cards + growth)", () => {
+    const result = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    expect(result.bestNoFuss?.account.id).not.toBe("westpac-life");
+  });
+
+  it("bestNoFuss is not ANZ Plus Growth Saver (requires deposit + growth)", () => {
+    const result = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    expect(result.bestNoFuss?.account.id).not.toBe("anz-plus-growth-saver");
+  });
+
+  it("bestNoFuss rankReasons includes 'No monthly hoops'", () => {
+    const result = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    expect(result.bestNoFuss?.rankReasons.some((r) => r.includes("hoops"))).toBe(true);
+  });
+});
+
+// ── rankAccounts — bestFlexibleWithdrawals ────────────────────────────────────
+
+describe("rankAccounts — flexible withdrawals category excludes growth-sensitive accounts", () => {
+  it("bestFlexibleWithdrawals.isFlexibleWithdrawals is true", () => {
+    const result = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    expect(result.bestFlexibleWithdrawals?.isFlexibleWithdrawals).toBe(true);
+  });
+
+  it("bestFlexibleWithdrawals withdrawalFlexibility is not growth-sensitive", () => {
+    const result = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    expect(result.bestFlexibleWithdrawals?.account.withdrawalFlexibility).not.toBe("growth-sensitive");
+  });
+
+  it("Westpac Life (growth-sensitive) never wins flexible category", () => {
+    const result = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    expect(result.bestFlexibleWithdrawals?.account.id).not.toBe("westpac-life");
+  });
+});
+
+// ── rankAccounts — hard-ineligible age product ────────────────────────────────
+
+describe("rankAccounts — hard-ineligible age product does not win", () => {
+  it("GSB Goal Saver (ageMax 24) does not win bestMaxReturn for age-25 user", () => {
+    const age25 = { ...SAMPLE_PROFILE, age: 25 };
+    const result = rankAccounts(ACCOUNTS, age25);
+    expect(result.bestMaxReturn?.account.id).not.toBe("gsb-goal-saver");
+  });
+
+  it("hard-ineligible account still appears in overall list", () => {
+    const age25 = { ...SAMPLE_PROFILE, age: 25 };
+    const result = rankAccounts(ACCOUNTS, age25);
+    expect(result.overall.some((r) => r.account.id === "gsb-goal-saver")).toBe(true);
+  });
+
+  it("GSB Goal Saver has hardIneligible=true for age-25 user", () => {
+    const age25 = { ...SAMPLE_PROFILE, age: 25 };
+    const result = rankAccounts(ACCOUNTS, age25);
+    const gsbGoal = result.overall.find((r) => r.account.id === "gsb-goal-saver")!;
+    expect(gsbGoal.eligibility.hardIneligible).toBe(true);
+    expect(gsbGoal.eligibility.status).toBe("not_eligible");
+  });
+
+  it("hard-ineligible account ranks below all non-hard-ineligible accounts", () => {
+    const age25 = { ...SAMPLE_PROFILE, age: 25 };
+    const result = rankAccounts(ACCOUNTS, age25);
+    const gsbGoal = result.overall.find((r) => r.account.id === "gsb-goal-saver")!;
+    const nonHard = result.overall.filter((r) => !r.eligibility.hardIneligible);
+    nonHard.forEach((r) => {
+      expect(r.annualInterest).toBeGreaterThanOrEqual(gsbGoal.annualInterest);
+    });
+  });
+});
+
+// ── rankAccounts — determinism and structure ──────────────────────────────────
+
+describe("rankAccounts — stable and deterministic", () => {
+  it("same inputs produce identical overall order", () => {
+    const r1 = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    const r2 = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    expect(r1.overall.map((r) => r.account.id)).toEqual(r2.overall.map((r) => r.account.id));
+  });
+
+  it("same inputs produce identical category winners", () => {
+    const r1 = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    const r2 = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    expect(r1.bestMaxReturn?.account.id).toBe(r2.bestMaxReturn?.account.id);
+    expect(r1.bestNoFuss?.account.id).toBe(r2.bestNoFuss?.account.id);
+    expect(r1.bestFlexibleWithdrawals?.account.id).toBe(r2.bestFlexibleWithdrawals?.account.id);
+  });
+
+  it("overall contains all 8 accounts", () => {
+    const result = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    expect(result.overall).toHaveLength(ACCOUNTS.length);
+  });
+
+  it("extraAnnualBenefit is negative when account base rate is below currentRatePa", () => {
+    // ANZ Plus earns 0.01% when ineligible vs user's 3.5% — clearly negative delta.
+    const result = rankAccounts(ACCOUNTS, FAILS_ALL_PROFILE);
+    const anz = result.overall.find((r) => r.account.id === "anz-plus-growth-saver")!;
+    expect(anz.extraAnnualBenefit).toBeLessThan(0);
+  });
+
+  it("overall is sorted by annualInterest descending", () => {
+    const result = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    for (let i = 0; i < result.overall.length - 1; i++) {
+      expect(result.overall[i].annualInterest).toBeGreaterThanOrEqual(
+        result.overall[i + 1].annualInterest
+      );
+    }
   });
 });
