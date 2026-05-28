@@ -1,9 +1,5 @@
-import { Hero } from "@/components/hero";
+import { OptimizerPage } from "@/components/optimizer-page";
 
 export default function Home() {
-  return (
-    <div className="max-w-5xl mx-auto">
-      <Hero />
-    </div>
-  );
+  return <OptimizerPage />;
 }
