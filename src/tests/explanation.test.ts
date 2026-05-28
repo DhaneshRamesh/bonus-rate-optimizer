@@ -71,10 +71,10 @@ function getRanked(profile: UserProfile, accountId: string) {
 // ── at_risk — mentions unmet condition ───────────────────────────────────────
 
 describe("buildExplanation — at-risk account", () => {
-  it("mentions 'at risk' or 'conditions are currently at risk'", () => {
+  it("mentions 'may miss this bonus rate'", () => {
     const ranked = getRanked(AT_RISK_PROFILE, "westpac-life");
     const text = buildExplanation(ranked, AT_RISK_PROFILE);
-    expect(text.toLowerCase()).toMatch(/at risk|conditions.*at risk/);
+    expect(text.toLowerCase()).toContain("may miss this bonus rate");
   });
 
   it("lists at least one unmet condition in the explanation", () => {
@@ -86,16 +86,10 @@ describe("buildExplanation — at-risk account", () => {
     ).toBe(true);
   });
 
-  it("states that the estimate uses the base rate conservatively", () => {
+  it("states that the estimate uses the likely rate", () => {
     const ranked = getRanked(AT_RISK_PROFILE, "westpac-life");
     const text = buildExplanation(ranked, AT_RISK_PROFILE);
-    expect(text.toLowerCase()).toContain("base rate");
-  });
-
-  it("nudges toward simpler options when account is complex (score ≥ 3)", () => {
-    const ranked = getRanked(AT_RISK_PROFILE, "westpac-life"); // score 3
-    const text = buildExplanation(ranked, AT_RISK_PROFILE);
-    expect(text.toLowerCase()).toContain("no-fuss");
+    expect(text.toLowerCase()).toContain("rate you are likely to earn");
   });
 });
 
@@ -163,11 +157,11 @@ describe("buildExplanation — no-fuss account", () => {
 // ── hard-ineligible account ───────────────────────────────────────────────────
 
 describe("buildExplanation — hard-ineligible account (age restriction)", () => {
-  it("mentions age restriction for over-25 user on GSB Goal Saver (ageMax 24)", () => {
+  it("mentions the specific age restriction in the reason", () => {
     const profile: UserProfile = { ...ELIGIBLE_PROFILE, age: 25 };
     const ranked = getRanked(profile, "gsb-goal-saver");
     const text = buildExplanation(ranked, profile);
-    expect(text.toLowerCase()).toContain("age restriction");
+    expect(text.toLowerCase()).toContain("years old or younger");
   });
 
   it("returns early — does not include interest estimate for hard-ineligible", () => {

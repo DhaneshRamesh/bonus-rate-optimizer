@@ -33,13 +33,67 @@ export const ACCOUNTS: SavingsAccountOffer[] = [
     monthlyGrowthRequirement: undefined,
     withdrawalFlexibility: "full",
     conditionComplexityScore: 1,
-    sourceUrl: "https://www.macquarie.com/au/personal/banking/savings-accounts/savings-account",
+    sourceUrl: "https://www.macquarie.com.au/everyday-banking.html",
     sourceLabel: "Official provider page",
     lastChecked: "2025-03-01",
     notes:
       "No ongoing conditions — base rate is always earned. " +
       "New customers receive a higher intro rate for the first 4 months. " +
       "ASSUMPTION: intro rate and intro period based on publicly advertised figures ~early 2025.",
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 1b. ING — Savings Maximiser
+  // Confidence: HIGH — widely documented product with strict conditions
+  // ──────────────────────────────────────────────────────────────────────────
+  {
+    id: "ing-savings-maximiser",
+    provider: "ING",
+    productName: "Savings Maximiser",
+    baseRatePa: 0.01,
+    bonusRatePa: 5.49,
+    totalMaxRatePa: 5.50,
+    introRatePa: undefined,
+    introMonths: undefined,
+    requiresLinkedAccount: true,
+    monthlyDepositRequirement: 1000,
+    monthlyCardPurchaseRequirement: 5,
+    monthlyGrowthRequirement: true,
+    capAmount: 100000,
+    withdrawalFlexibility: "growth-sensitive",
+    conditionComplexityScore: 4,
+    sourceUrl: "https://www.ing.com.au/savings/savings-maximiser.html",
+    sourceLabel: "Official provider page",
+    lastChecked: "2025-05-28",
+    notes:
+      "Requires linked Orange Everyday account. Must deposit $1,000+ from an external source, make 5+ settled card purchases, and grow the balance each month to earn the bonus rate.",
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 1c. Ubank — Save
+  // Confidence: HIGH — popular digital bank offer
+  // ──────────────────────────────────────────────────────────────────────────
+  {
+    id: "ubank-save",
+    provider: "Ubank",
+    productName: "Save",
+    baseRatePa: 0.10,
+    bonusRatePa: 5.00,
+    totalMaxRatePa: 5.10,
+    introRatePa: 5.85,
+    introMonths: 4,
+    requiresLinkedAccount: false,
+    monthlyDepositRequirement: 200,
+    monthlyCardPurchaseRequirement: undefined,
+    monthlyGrowthRequirement: true,
+    capAmount: 1000000,
+    withdrawalFlexibility: "growth-sensitive",
+    conditionComplexityScore: 2,
+    sourceUrl: "https://www.ubank.com.au/banking/savings-account",
+    sourceLabel: "Official provider page",
+    lastChecked: "2025-05-28",
+    notes:
+      "Must grow combined savings balance each month to earn the bonus rate. New customers receive a high intro rate for 4 months.",
   },
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -61,7 +115,7 @@ export const ACCOUNTS: SavingsAccountOffer[] = [
     monthlyGrowthRequirement: undefined,
     withdrawalFlexibility: "full",
     conditionComplexityScore: 1,
-    sourceUrl: "https://www.ampbank.com.au/personal/bank/savings-accounts/go-save",
+    sourceUrl: "https://www.amp.com.au/personal-banking",
     sourceLabel: "Official provider page",
     lastChecked: "2025-03-01",
     notes:

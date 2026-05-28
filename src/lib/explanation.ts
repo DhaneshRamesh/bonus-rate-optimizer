@@ -82,36 +82,27 @@ export function buildExplanation(ranked: RankedAccount, user: UserProfile): stri
   const { account, eligibility, annualInterest, extraAnnualBenefit, isNoFuss } = ranked;
   const parts: string[] = [];
 
-  // ── Situation sentence ────────────────────────────────────────────────────
-  if (eligibility.hardIneligible) {
-    return (
-      `${account.provider} ${account.productName} has an age restriction — ` +
-      `based on what you entered, you are not eligible for this account.`
-    );
+  // ── Deterministic Overrides for Ineligibility ────────────────────────────
+  if (eligibility.status === "not_eligible") {
+    const reason = eligibility.unmetConditions[0]?.explanation || "you do not meet the requirements";
+    return `Based on the details entered, this account is not currently eligible for the advertised bonus rate because ${reason} The calculation uses the standard/base rate instead. You can verify the condition on the provider's product page.`;
   }
 
-  if (eligibility.status === "likely_eligible") {
-    if (isNoFuss) {
-      parts.push(
-        `Based on what you entered, ${account.provider} ${account.productName} is ` +
-        `a straightforward option with no monthly conditions to track.`
-      );
-    } else {
-      parts.push(
-        `Based on what you entered, ${account.provider} ${account.productName} looks ` +
-        `like a good fit — you meet all the conditions to earn the bonus rate.`
-      );
-    }
-  } else if (eligibility.status === "at_risk") {
+  if (eligibility.status === "at_risk") {
+    const reason = eligibility.unmetConditions[0]?.explanation || "you may miss a monthly requirement";
+    return `Based on the details entered, you may miss this bonus rate because ${reason} The expected return shown is based on the rate you are likely to earn under these assumptions.`;
+  }
+
+  // ── Situation sentence (Likely Eligible) ──────────────────────────────────
+  if (isNoFuss) {
     parts.push(
-      `Based on what you entered, ${account.provider} ${account.productName} could ` +
-      `earn you the bonus — but some conditions are currently at risk. ` +
-      `The interest estimate uses the base rate only as a conservative figure.`
+      `Based on what you entered, ${account.provider} ${account.productName} is ` +
+      `a straightforward option with no monthly conditions to track.`
     );
   } else {
     parts.push(
-      `Based on what you entered, you would earn only the base rate of ` +
-      `${account.baseRatePa}% p.a. on ${account.provider} ${account.productName}.`
+      `Based on what you entered, ${account.provider} ${account.productName} looks ` +
+      `like a good fit — you meet all the conditions to earn the bonus rate.`
     );
   }
 
@@ -120,13 +111,9 @@ export function buildExplanation(ranked: RankedAccount, user: UserProfile): stri
     parts.push(
       `It has no monthly deposit, card purchase, or balance growth requirements.`
     );
-  } else if (eligibility.status === "likely_eligible" && eligibility.metConditions.length > 0) {
-    const list = eligibility.metConditions.join("; ");
+  } else if (eligibility.metConditions.length > 0) {
+    const list = eligibility.metConditions.map(c => c.label).join("; ");
     parts.push(`Conditions you meet: ${list}.`);
-  } else if (eligibility.unmetConditions.length > 0) {
-    const n = eligibility.unmetConditions.length;
-    const list = eligibility.unmetConditions.join("; ");
-    parts.push(`Condition${n > 1 ? "s" : ""} not currently met: ${list}.`);
   }
 
   // ── Interest vs current rate ──────────────────────────────────────────────
@@ -185,12 +172,7 @@ export function buildExplanation(ranked: RankedAccount, user: UserProfile): stri
   }
 
   // ── Simpler-option nudge (at-risk + complex account) ─────────────────────
-  if (!isNoFuss && eligibility.status === "at_risk" && account.conditionComplexityScore >= 3) {
-    parts.push(
-      `If tracking monthly conditions feels difficult, the no-fuss accounts in ` +
-      `this comparison may be easier to maintain consistently.`
-    );
-  }
+  // Omitted for likely_eligible since this is now only for likely_eligible anyway.
 
   return parts.join(" ");
 }

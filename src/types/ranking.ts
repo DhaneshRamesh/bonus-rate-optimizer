@@ -1,16 +1,36 @@
 import type { EligibilityStatus, SavingsAccountOffer } from "./accounts";
 
+export type EligibilityReason = {
+  conditionKey:
+    | "age"
+    | "linked_account"
+    | "monthly_deposit"
+    | "card_purchases"
+    | "monthly_growth"
+    | "balance_cap"
+    | "intro_eligibility"
+    | "provider_terms"
+    | "withdrawal_flexibility";
+  status: "met" | "unmet" | "warning";
+  label: string;
+  userValue?: string | number | boolean;
+  requiredValue?: string | number | boolean;
+  explanation: string;
+  sourceUrl: string;
+  sourceLabel: string;
+};
+
 /** Flat result returned by checkEligibility — used by UI components. */
 export interface EligibilityResult {
   status: EligibilityStatus;
-  /** True only for age restrictions — cannot be actioned by the user. */
+  /** True when a hard restriction (like age or linked account refusal) makes the user completely ineligible. */
   hardIneligible: boolean;
-  /** Human-readable conditions the user currently meets. */
-  metConditions: string[];
-  /** Human-readable conditions the user does not currently meet. */
-  unmetConditions: string[];
+  /** Structured conditions the user currently meets. */
+  metConditions: EligibilityReason[];
+  /** Structured conditions the user does not currently meet. */
+  unmetConditions: EligibilityReason[];
   /** Advisory notices (intro rates, balance caps, stale data, withdrawal caveats). */
-  warnings: string[];
+  warnings: EligibilityReason[];
 }
 
 /** A single account fully analysed and ranked against the user's profile. */
@@ -19,6 +39,10 @@ export interface RankedAccount {
   eligibility: EligibilityResult;
   /** Estimated annual interest in AUD at the realistic rate (non-compounding). */
   annualInterest: number;
+  /** Potential annual interest if all behavioural conditions were met (non-compounding). */
+  potentialAnnualInterest?: number;
+  /** Difference between potential and expected annual interest. */
+  potentialUpside?: number;
   /** Effective annual rate the user would realistically earn, in % p.a. */
   effectiveRatePa: number;
   /** annualInterest minus what the user currently earns at their currentRatePa. */
@@ -37,13 +61,18 @@ export interface RankedAccount {
 
 /** Return value of rankAccounts. */
 export interface RankAccountsResult {
-  overall: RankedAccount[];
-  /** Highest expected annual interest among non-hard-ineligible accounts. */
-  bestMaxReturn?: RankedAccount;
-  /** Highest interest among no-fuss (no monthly conditions) accounts. */
-  bestNoFuss?: RankedAccount;
-  /** Highest interest among accounts without growth-sensitive restrictions. */
-  bestFlexibleWithdrawals?: RankedAccount;
+  overall: RankedAccount[]; // All accounts sorted by annualInterest descending
+  bestMaxReturn?: RankedAccount; // Highest absolute return
+  bestNoFuss?: RankedAccount; // Highest return among no-fuss accounts
+  bestFlexibleWithdrawals?: RankedAccount; // Highest return among flexible withdrawal accounts
+}
+
+export interface DistinctRecommendationCards {
+  displayBestMatch?: RankedAccount;
+  displayNoFuss?: RankedAccount;
+  displayFlexible?: RankedAccount;
+  noFussIsDuplicate: boolean;
+  flexibleIsDuplicate: boolean;
 }
 
 /** Result of evaluating one condition against the user's profile. */

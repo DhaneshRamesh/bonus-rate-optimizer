@@ -3,11 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import type { ExplainResult } from "@/lib/explain-polisher";
 
+import type { RankedAccount } from "@/types/ranking";
+import type { UserProfile } from "@/types/user";
+import { buildExplanation } from "@/lib/explanation";
+
 interface ExplanationPanelProps {
-  text: string;
+  ranked: RankedAccount;
+  profile: UserProfile;
 }
 
-export function ExplanationPanel({ text }: ExplanationPanelProps) {
+export function ExplanationPanel({ ranked, profile }: ExplanationPanelProps) {
+  const text = buildExplanation(ranked, profile);
   const [result, setResult] = useState<ExplainResult>({
     explanation: text,
     source: "deterministic_fallback",
@@ -50,16 +56,16 @@ export function ExplanationPanel({ text }: ExplanationPanelProps) {
   return (
     <div className="rounded-3xl border border-border bg-card p-6">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-xs font-semibold text-foreground/70 uppercase tracking-wide">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           How this estimate was calculated
         </span>
         <span
           className={`text-xs px-2 py-0.5 rounded-full font-medium transition-colors ${
             loading
-              ? "bg-muted text-foreground/60 animate-pulse"
+              ? "bg-muted text-muted-foreground animate-pulse"
               : result.source === "ai_polished"
-                ? "bg-primary/20 text-foreground"
-                : "bg-muted text-foreground/70"
+                ? "bg-primary/10 text-primary"
+                : "bg-muted text-muted-foreground"
           }`}
         >
           {loading
@@ -69,13 +75,28 @@ export function ExplanationPanel({ text }: ExplanationPanelProps) {
               : "deterministic · no AI"}
         </span>
       </div>
-      <p
-        className={`text-sm text-foreground leading-relaxed transition-opacity duration-300 ${
-          loading ? "opacity-50" : "opacity-100"
-        }`}
-      >
-        {result.explanation}
-      </p>
+      <div className="space-y-3">
+        <p
+          className={`text-sm text-foreground leading-relaxed transition-opacity duration-300 ${
+            loading ? "opacity-50" : "opacity-100"
+          }`}
+        >
+          {result.explanation}
+        </p>
+        
+        {ranked.eligibility.status !== "likely_eligible" && ranked.account.sourceUrl && (
+          <div className="pt-2 border-t border-border">
+            <a
+              href={ranked.account.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium text-orange-600 hover:text-orange-800 underline"
+            >
+              Verify condition on {ranked.account.provider} website
+            </a>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

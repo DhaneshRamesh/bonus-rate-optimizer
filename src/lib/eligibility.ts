@@ -1,5 +1,5 @@
 import type { EligibilityStatus, SavingsAccountOffer } from "@/types/accounts";
-import type { ConditionCheck, EligibilityResult } from "@/types/ranking";
+import type { ConditionCheck, EligibilityResult, EligibilityReason } from "@/types/ranking";
 import type { UserProfile } from "@/types/user";
 
 /** Returns the most severe status from a set of condition checks. */
@@ -162,50 +162,90 @@ export function checkAllConditions(
   return checks;
 }
 
-/**
- * High-level eligibility check for UI display.
- * Returns a flat result with human-readable condition labels and advisory warnings.
- * Age failures are hard blockers (hardIneligible: true, early return).
- * Deposit/card/growth failures are behavioural (at_risk, not not_eligible).
- * Deterministic: same inputs always produce identical outputs.
- */
 export function checkEligibility(
   user: UserProfile,
   account: SavingsAccountOffer
 ): EligibilityResult {
+  const sourceUrl = account.sourceUrl || "#";
+  const sourceLabel = account.sourceLabel || "Provider terms need verification before production use.";
+
+  const metConditions: EligibilityReason[] = [];
+  const unmetConditions: EligibilityReason[] = [];
+  const warnings: EligibilityReason[] = [];
+  let status: EligibilityStatus = "likely_eligible";
+  let hardIneligible = false;
+
+  const pushReason = (
+    arr: EligibilityReason[],
+    statusType: "met" | "unmet" | "warning",
+    key: EligibilityReason["conditionKey"],
+    label: string,
+    explanation: string,
+    req?: string | number | boolean,
+    act?: string | number | boolean
+  ) => {
+    arr.push({
+      conditionKey: key,
+      status: statusType,
+      label,
+      explanation,
+      requiredValue: req,
+      userValue: act,
+      sourceUrl,
+      sourceLabel,
+    });
+  };
+
   // ── Age — hard blockers, early return ────────────────────────────────────
   if (account.ageMin !== undefined && user.age < account.ageMin) {
-    return {
-      status: "not_eligible",
-      hardIneligible: true,
-      metConditions: [],
-      unmetConditions: [`Must be at least ${account.ageMin} years old`],
-      warnings: [],
-    };
+    pushReason(
+      unmetConditions,
+      "unmet",
+      "age",
+      "Age requirement not met",
+      `This account requires you to be at least ${account.ageMin} years old.`,
+      `${account.ageMin}+`,
+      user.age
+    );
+    return { status: "not_eligible", hardIneligible: true, metConditions, unmetConditions, warnings };
   }
   if (account.ageMax !== undefined && user.age > account.ageMax) {
-    return {
-      status: "not_eligible",
-      hardIneligible: true,
-      metConditions: [],
-      unmetConditions: [`Must be ${account.ageMax} or younger`],
-      warnings: [],
-    };
+    pushReason(
+      unmetConditions,
+      "unmet",
+      "age",
+      "Age requirement not met",
+      `This account requires you to be ${account.ageMax} years old or younger.`,
+      `<= ${account.ageMax}`,
+      user.age
+    );
+    return { status: "not_eligible", hardIneligible: true, metConditions, unmetConditions, warnings };
   }
-
-  const metConditions: string[] = [];
-  const unmetConditions: string[] = [];
-  const warnings: string[] = [];
-  let status: EligibilityStatus = "likely_eligible";
 
   // ── Linked account ───────────────────────────────────────────────────────
   if (account.requiresLinkedAccount) {
-    const label = `Open a linked ${account.provider} transaction account`;
     if (user.willingToOpenLinkedAccount) {
-      metConditions.push(label);
+      pushReason(
+        metConditions,
+        "met",
+        "linked_account",
+        "Linked account",
+        `You are willing to open the required linked transaction account with ${account.provider}.`,
+        true,
+        true
+      );
     } else {
-      unmetConditions.push(label);
+      pushReason(
+        unmetConditions,
+        "unmet",
+        "linked_account",
+        "Linked account required",
+        `The bonus rate requires opening a linked transaction account with ${account.provider}.`,
+        true,
+        false
+      );
       status = "not_eligible";
+      hardIneligible = true; // Rule: linked account refusal is a hard disqualifier
     }
   }
 
@@ -214,10 +254,24 @@ export function checkEligibility(
     const required = account.monthlyDepositRequirement;
     const actual = user.monthlyExternalDeposit;
     if (actual >= required) {
-      metConditions.push(`Deposit $${required.toLocaleString()}+ per month`);
+      pushReason(
+        metConditions,
+        "met",
+        "monthly_deposit",
+        "Monthly deposit",
+        `You meet the $${required.toLocaleString()} monthly deposit requirement.`,
+        `$${required.toLocaleString()}`,
+        `$${actual.toLocaleString()}`
+      );
     } else {
-      unmetConditions.push(
-        `Deposit $${required.toLocaleString()}+ per month (currently $${actual.toLocaleString()})`
+      pushReason(
+        unmetConditions,
+        "unmet",
+        "monthly_deposit",
+        "Deposit shortfall",
+        `You must deposit at least $${required.toLocaleString()} per month.`,
+        `$${required.toLocaleString()}`,
+        `$${actual.toLocaleString()}`
       );
       if (status !== "not_eligible") status = "at_risk";
     }
@@ -228,10 +282,24 @@ export function checkEligibility(
     const required = account.monthlyCardPurchaseRequirement;
     const actual = user.monthlyCardPurchases;
     if (actual >= required) {
-      metConditions.push(`Make ${required}+ card purchases per month`);
+      pushReason(
+        metConditions,
+        "met",
+        "card_purchases",
+        "Card purchases",
+        `You meet the requirement of ${required} card purchases per month.`,
+        required,
+        actual
+      );
     } else {
-      unmetConditions.push(
-        `Make ${required}+ card purchases per month (currently ${actual})`
+      pushReason(
+        unmetConditions,
+        "unmet",
+        "card_purchases",
+        "Card purchases shortfall",
+        `You must make at least ${required} card purchases per month.`,
+        required,
+        actual
       );
       if (status !== "not_eligible") status = "at_risk";
     }
@@ -241,10 +309,25 @@ export function checkEligibility(
   if (account.monthlyGrowthRequirement) {
     const growth = user.monthlyNetSavingsGrowth;
     if (growth > 100) {
-      metConditions.push("Balance grows each month");
+      pushReason(
+        metConditions,
+        "met",
+        "monthly_growth",
+        "Balance growth",
+        "Your balance is projected to grow each month.",
+        "Positive growth",
+        `+$${growth.toLocaleString()}`
+      );
     } else {
-      const actualStr = growth > 0 ? `+$${growth.toLocaleString()}` : `$${growth.toLocaleString()}`;
-      unmetConditions.push(`Balance must grow each month (currently ${actualStr}/mo)`);
+      pushReason(
+        unmetConditions,
+        "unmet",
+        "monthly_growth",
+        "Balance growth at risk",
+        "Your balance must grow each month (excluding interest) to earn the bonus.",
+        "Positive growth",
+        growth > 0 ? `+$${growth.toLocaleString()}` : `$${growth.toLocaleString()}`
+      );
       if (status !== "not_eligible") status = "at_risk";
     }
   }
@@ -252,31 +335,79 @@ export function checkEligibility(
   // ── Withdrawal flexibility warning ───────────────────────────────────────
   if (account.withdrawalFlexibility !== "full" && user.wantsFlexibleWithdrawals) {
     if (status === "likely_eligible") status = "at_risk";
-    warnings.push(
+    pushReason(
+      unmetConditions,
+      "unmet",
+      "withdrawal_flexibility",
+      "Withdrawal restrictions",
       account.withdrawalFlexibility === "growth-sensitive"
-        ? "Any withdrawal this month forfeits the bonus rate"
-        : "Withdrawals must be made via a linked account"
+        ? "Any net withdrawal this month forfeits the bonus rate."
+        : "Withdrawals must be made via a linked account.",
+      "No/limited withdrawals",
+      "Needs flexibility"
     );
   }
 
   // ── Intro rate warning ───────────────────────────────────────────────────
   if (account.introRatePa !== undefined && account.introMonths !== undefined) {
-    warnings.push(
-      `Intro rate of ${account.introRatePa}% p.a. applies for the first ${account.introMonths} months only`
-    );
+    if (user.isNewCustomerForIntro) {
+      pushReason(
+        warnings,
+        "warning",
+        "intro_eligibility",
+        "Introductory rate applies",
+        `The ${account.introRatePa}% p.a. rate applies for the first ${account.introMonths} months only.`,
+        "New customer",
+        "New customer"
+      );
+    } else {
+      pushReason(
+        warnings,
+        "warning",
+        "intro_eligibility",
+        "Introductory rate ineligible",
+        `The advertised intro rate is for new customers only. The standard ongoing rate is used instead.`,
+        "New customer",
+        "Existing customer"
+      );
+    }
   }
 
   // ── Balance cap warning ──────────────────────────────────────────────────
   if (account.capAmount !== undefined) {
-    warnings.push(
-      `Bonus rate applies on balances up to $${account.capAmount.toLocaleString()} only`
-    );
+    if (user.balance > account.capAmount) {
+      pushReason(
+        warnings,
+        "warning",
+        "balance_cap",
+        "Balance exceeds cap",
+        `The bonus rate applies only to balances up to $${account.capAmount.toLocaleString()}. The excess earns a lower base rate.`,
+        `<= $${account.capAmount.toLocaleString()}`,
+        `$${user.balance.toLocaleString()}`
+      );
+    } else {
+      pushReason(
+        metConditions,
+        "met",
+        "balance_cap",
+        "Within balance cap",
+        `Your balance is under the $${account.capAmount.toLocaleString()} cap for the maximum rate.`,
+        `<= $${account.capAmount.toLocaleString()}`,
+        `$${user.balance.toLocaleString()}`
+      );
+    }
   }
 
   // ── Stale data warning ───────────────────────────────────────────────────
-  warnings.push(
-    `Rates last verified ${account.lastChecked} — always confirm current terms at ${account.sourceLabel}`
+  pushReason(
+    warnings,
+    "warning",
+    "provider_terms",
+    "Verify provider terms",
+    `Rates last verified ${account.lastChecked} — always confirm current terms at the provider.`,
+    undefined,
+    undefined
   );
 
-  return { status, hardIneligible: false, metConditions, unmetConditions, warnings };
+  return { status, hardIneligible, metConditions, unmetConditions, warnings };
 }

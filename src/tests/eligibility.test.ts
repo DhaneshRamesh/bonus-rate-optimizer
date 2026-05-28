@@ -219,7 +219,7 @@ describe("checkAllConditions — withdrawal_flexibility", () => {
 describe("checkEligibility — Westpac Life", () => {
   const westpac = ACCOUNTS.find((a) => a.id === "westpac-life")!;
 
-  it("at_risk when card purchases and growth both fail", () => {
+  it("is not treated as fully eligible without meeting its specific conditions", () => {
     const profile: UserProfile = {
       ...BASE_PROFILE,
       monthlyCardPurchases: 2,       // requires 5
@@ -249,7 +249,7 @@ describe("checkEligibility — ANZ Plus Growth Saver", () => {
     const result = checkEligibility(profile, anz);
     expect(result.status).toBe("at_risk");
     expect(result.hardIneligible).toBe(false);
-    expect(result.unmetConditions.some((c) => c.toLowerCase().includes("grow"))).toBe(true);
+    expect(result.unmetConditions.some((c) => c.conditionKey === "monthly_growth")).toBe(true);
   });
 
   it("likely_eligible when deposit met and growth exceeds $100", () => {

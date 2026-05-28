@@ -30,7 +30,7 @@ export function EligibilityChecklist({ ranked }: EligibilityChecklistProps) {
     return (
       <div className="rounded-3xl border border-border bg-card p-6">
         <p className="text-sm font-semibold text-foreground mb-1">No monthly conditions</p>
-        <p className="text-sm text-foreground/70">
+        <p className="text-sm text-muted-foreground">
           This account pays its rate automatically — nothing to track.
         </p>
       </div>
@@ -42,39 +42,73 @@ export function EligibilityChecklist({ ranked }: EligibilityChecklistProps) {
       <h3 className="text-sm font-semibold text-foreground">Condition checklist</h3>
 
       {eligibility.metConditions.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-4">
           {eligibility.metConditions.map((cond) => (
-            <div key={cond} className="flex items-start gap-2.5">
-              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xs mt-0.5">
+            <div key={cond.conditionKey} className="flex items-start gap-2.5">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-xs mt-0.5">
                 ✓
               </span>
-              <p className="text-sm text-foreground">{cond}</p>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">{cond.label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{cond.explanation}</p>
+                {(cond.requiredValue !== undefined || cond.userValue !== undefined) && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    <span className="font-medium">Required:</span> {cond.requiredValue ?? "N/A"} <span className="mx-1">·</span> <span className="font-medium">You:</span> {cond.userValue ?? "N/A"}
+                  </p>
+                )}
+                {cond.sourceUrl && (
+                  <a href={cond.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-1 text-xs text-muted-foreground underline hover:text-foreground">
+                    Provider terms
+                  </a>
+                )}
+              </div>
             </div>
           ))}
         </div>
       )}
 
       {eligibility.unmetConditions.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-4 pt-2 border-t border-border">
           {eligibility.unmetConditions.map((cond) => (
-            <div key={cond} className="flex items-start gap-2.5">
+            <div key={cond.conditionKey} className="flex items-start gap-2.5">
               <span className="flex-shrink-0 w-5 h-5 rounded-full bg-rose-100 flex items-center justify-center text-rose-500 text-xs font-bold mt-0.5">
                 ✕
               </span>
-              <p className="text-sm text-foreground">{cond}</p>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">{cond.label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{cond.explanation}</p>
+                {(cond.requiredValue !== undefined || cond.userValue !== undefined) && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    <span className="font-medium">Required:</span> {cond.requiredValue ?? "N/A"} <span className="mx-1">·</span> <span className="font-medium">You:</span> {cond.userValue ?? "N/A"}
+                  </p>
+                )}
+                {cond.sourceUrl && (
+                  <a href={cond.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-1 text-xs text-rose-600 underline hover:text-rose-800">
+                    Verify provider terms
+                  </a>
+                )}
+              </div>
             </div>
           ))}
         </div>
       )}
 
       {eligibility.warnings.length > 0 && (
-        <div className="space-y-2 pt-1 border-t border-border">
+        <div className="space-y-4 pt-2 border-t border-border">
           {eligibility.warnings.map((warn) => (
-            <div key={warn} className="flex items-start gap-2.5">
-              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 text-xs font-bold mt-0.5">
+            <div key={warn.conditionKey} className="flex items-start gap-2.5">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-xs font-bold mt-0.5">
                 !
               </span>
-              <p className="text-sm text-foreground/70">{warn}</p>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-muted-foreground">{warn.label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{warn.explanation}</p>
+                {warn.sourceUrl && (
+                  <a href={warn.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-1 text-xs text-muted-foreground underline hover:text-foreground">
+                    Provider terms
+                  </a>
+                )}
+              </div>
             </div>
           ))}
         </div>

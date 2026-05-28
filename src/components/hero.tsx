@@ -1,60 +1,88 @@
-import { ArrowRight, BadgeCheck, Search, TrendingUp } from "lucide-react";
-
-const STATS = [
-  { value: "8", label: "AU accounts compared", icon: Search },
-  { value: "100%", label: "transparent logic", icon: BadgeCheck },
-  { value: "Live", label: "updates as you type", icon: TrendingUp },
-];
+import { ArrowRight, Lock, CheckCircle2 } from "lucide-react";
 
 export function Hero() {
   return (
-    <section
-      className="mx-4 sm:mx-6 mt-6 mb-10 rounded-3xl overflow-hidden shadow-2xl ring-1 ring-orange-100/70 relative"
-      style={{
-        background:
-          "linear-gradient(135deg, #F9B15F 0%, #F59E0B 55%, #EA580C 100%)",
-      }}
-    >
-      {/* Subtle overlay to make text pop more if needed */}
-      <div className="absolute inset-0 bg-black/10 mix-blend-overlay"></div>
-      <div className="px-8 py-12 sm:px-12 sm:py-16 lg:px-16 lg:py-20 max-w-3xl relative z-10">
-        <p className="text-sm font-semibold text-white/90 tracking-wide uppercase mb-4">
-          Concept feature · Open Home Loans
-        </p>
+    <section className="mx-4 sm:mx-6 mt-8 mb-12 overflow-hidden relative">
+      <div className="px-8 py-12 sm:px-12 sm:py-16 lg:px-16 lg:py-20 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-10 items-center max-w-6xl mx-auto">
+          {/* Left Column: Copy */}
+          <div className="max-w-xl">
+            <p className="text-sm font-semibold text-primary tracking-wide uppercase mb-4">
+              Concept feature · Open Home Loans
+            </p>
 
-        <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-white tracking-tight leading-[1.1] mb-5 drop-shadow-sm">
-          See the savings rate
-          <br />
-          <span className="text-white/90">you could actually earn.</span>
-        </h1>
+            <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold font-serif text-foreground tracking-tight leading-[1.15] mb-5">
+              See the savings rate
+              <br />
+              <span className="text-foreground/80">you could actually earn.</span>
+            </h1>
 
-        <p className="text-lg text-white/90 leading-relaxed mb-8 max-w-lg font-medium drop-shadow-sm">
-          Compare AU bonus savings accounts by your real habits — not the
-          headline rate. Adjust the sliders below and see your honest estimate
-          instantly. No sign-up, no obligation.
-        </p>
+            <p className="text-lg text-foreground/80 leading-relaxed mb-8 font-medium max-w-lg">
+              Compare Australian bonus savings accounts by your real habits — not just the headline rate. We estimate your likely return after conditions, caps, and eligibility rules.
+            </p>
 
-        <a
-          href="#form"
-          className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-base font-bold text-orange-700 bg-white shadow-lg hover:bg-orange-50 transition-colors"
-        >
-          Check my rate
-          <ArrowRight className="h-4 w-4" />
-        </a>
-
-        <div className="mt-12 grid grid-cols-3 gap-3 sm:gap-4 max-w-lg">
-          {STATS.map(({ value, label, icon: Icon }) => (
-            <div
-              key={label}
-              className="bg-white/75 backdrop-blur-sm rounded-2xl p-4 border border-white/80"
+            <a
+              href="#form"
+              className="inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg font-bold text-primary-foreground bg-primary shadow-lg shadow-primary/20 hover:bg-primary/90 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 mb-6"
             >
-              <Icon className="h-4 w-4 text-orange-700 mb-2" />
-              <p className="text-xl sm:text-2xl font-bold text-orange-950 leading-none">
-                {value}
-              </p>
-              <p className="text-xs text-orange-950/70 mt-1 leading-snug">{label}</p>
+              Check my rate
+              <ArrowRight className="h-4 w-4" />
+            </a>
+
+            <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+              <Lock className="w-3.5 h-3.5" />
+              <span>Demo dataset · No sign-up · General information only</span>
             </div>
-          ))}
+          </div>
+
+          {/* Right Column: Preview Card */}
+          <div className="relative w-full max-w-md mx-auto lg:mx-0 lg:ml-auto">
+            {/* Decorative background blur */}
+            <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full" />
+            
+            <div className="relative bg-card rounded-3xl p-6 sm:p-8 border border-border shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+                    Estimated annual interest
+                  </p>
+                  <p className="text-4xl font-bold text-foreground mt-1 tracking-tight">
+                    +$788 <span className="text-xl font-medium text-muted-foreground">/ year</span>
+                  </p>
+                </div>
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-800 shadow-sm border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Likely eligible
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    Based on:
+                  </p>
+                  <ul className="space-y-2">
+                    {[
+                      "Monthly deposit met",
+                      "Balance growth met",
+                      "Balance within bonus cap"
+                    ].map((cond) => (
+                      <li key={cond} className="flex items-center gap-2.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        <span className="text-sm font-medium text-foreground">{cond}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="pt-4 border-t border-border">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Compared with your current <span className="text-foreground font-bold">2.05% p.a.</span> rate
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

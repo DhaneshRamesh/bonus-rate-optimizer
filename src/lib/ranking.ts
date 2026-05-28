@@ -1,5 +1,5 @@
 import type { SavingsAccountOffer } from "@/types/accounts";
-import type { AccountResult, RankedAccount, RankAccountsResult } from "@/types/ranking";
+import type { AccountResult, RankedAccount, RankAccountsResult, DistinctRecommendationCards } from "@/types/ranking";
 import type { UserProfile } from "@/types/user";
 import { checkAllConditions, checkEligibility, deriveEligibilityStatus } from "./eligibility";
 import { buildConditionSummary } from "./explanation";
@@ -96,6 +96,18 @@ function buildRankedAccount(
   const effectiveRatePa = calc.effectiveRatePa;
   const extraAnnualBenefit = annualInterest - (user.balance * user.currentRatePa) / 100;
 
+  let potentialAnnualInterest: number | undefined;
+  let potentialUpside: number | undefined;
+  
+  if (!eligibility.hardIneligible) {
+    const potentialCalc = calculateAnnualInterest(user.balance, account, {
+      eligibleForBonus: true,
+      isNewCustomerForIntro: user.isNewCustomerForIntro,
+    });
+    potentialAnnualInterest = potentialCalc.interestAmount;
+    potentialUpside = potentialAnnualInterest - annualInterest;
+  }
+
   const noFuss = isNoFussAccount(account);
   const flexible = isFlexibleAccount(account);
 
@@ -117,7 +129,7 @@ function buildRankedAccount(
   } else if (eligibility.status === "at_risk") {
     if (
       account.monthlyGrowthRequirement &&
-      eligibility.unmetConditions.some((c) => c.toLowerCase().includes("grow"))
+      eligibility.unmetConditions.some((c) => c.conditionKey === "monthly_growth")
     ) {
       rankReasons.push("You may miss the bonus due to the monthly growth requirement");
     }
@@ -136,7 +148,7 @@ function buildRankedAccount(
   }
 
   // ── Risks ──────────────────────────────────────────────────────────────────
-  const risks: string[] = [...eligibility.unmetConditions];
+  const risks: string[] = eligibility.unmetConditions.map((c) => c.explanation);
 
   if (calc.capImpact) risks.push(calc.capImpact);
 
@@ -151,13 +163,19 @@ function buildRankedAccount(
   }
 
   if (eligibility.hardIneligible) {
-    risks.push("Age restriction — you do not qualify for this account");
+    // If there's an age restriction error, it's already in unmetConditions.
+    // We can add a generic hard restriction notice if we want.
+    if (!eligibility.unmetConditions.some((c) => c.conditionKey === "age")) {
+       risks.push("You do not qualify for this account under the current assumptions");
+    }
   }
 
   return {
     account,
     eligibility,
     annualInterest,
+    potentialAnnualInterest,
+    potentialUpside,
     effectiveRatePa,
     extraAnnualBenefit,
     categoryTags,
@@ -211,6 +229,57 @@ export function rankAccounts(
   const bestFlexibleWithdrawals = eligible.find((r) => r.isFlexibleWithdrawals);
 
   return { overall, bestMaxReturn, bestNoFuss, bestFlexibleWithdrawals };
+}
+
+/**
+ * Returns distinct accounts for the summary cards.
+ * If the top Best Match is also the Best No Fuss, it tries to find the next best No Fuss account
+ * so the summary cards show different options. It falls back to duplicates if no alternative exists.
+ */
+export function getDistinctRecommendationCards(results: RankAccountsResult): DistinctRecommendationCards {
+  const eligible = results.overall.filter((r) => !r.eligibility.hardIneligible);
+
+  const displayBestMatch = eligible[0];
+  
+  if (!displayBestMatch) {
+    return { noFussIsDuplicate: false, flexibleIsDuplicate: false };
+  }
+
+  // Find a distinct No Fuss account
+  let displayNoFuss = eligible.find(
+    (r) => r.isNoFuss && r.account.id !== displayBestMatch.account.id
+  );
+  let noFussIsDuplicate = false;
+  
+  if (!displayNoFuss) {
+    displayNoFuss = results.bestNoFuss;
+    if (displayNoFuss?.account.id === displayBestMatch.account.id) {
+      noFussIsDuplicate = true;
+    }
+  }
+
+  // Find a distinct Flexible account
+  let displayFlexible = eligible.find(
+    (r) => r.isFlexibleWithdrawals &&
+           r.account.id !== displayBestMatch.account.id &&
+           r.account.id !== displayNoFuss?.account.id
+  );
+  let flexibleIsDuplicate = false;
+
+  if (!displayFlexible) {
+    displayFlexible = results.bestFlexibleWithdrawals;
+    if (displayFlexible && (displayFlexible.account.id === displayBestMatch.account.id || displayFlexible.account.id === displayNoFuss?.account.id)) {
+      flexibleIsDuplicate = true;
+    }
+  }
+
+  return {
+    displayBestMatch,
+    displayNoFuss,
+    displayFlexible,
+    noFussIsDuplicate,
+    flexibleIsDuplicate,
+  };
 }
 
 /**

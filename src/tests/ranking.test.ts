@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyzeOffer, rankAccounts, rankOffers } from "@/lib/ranking";
+import { analyzeOffer, rankAccounts, rankOffers, getDistinctRecommendationCards } from "@/lib/ranking";
 import { ACCOUNTS } from "@/data/accounts";
 import type { SavingsAccountOffer } from "@/types/accounts";
 import type { UserProfile } from "@/types/user";
@@ -321,5 +321,54 @@ describe("rankAccounts — stable and deterministic", () => {
         result.overall[i + 1].annualInterest
       );
     }
+  });
+});
+
+// ── getDistinctRecommendationCards ───────────────────────────────────────────
+
+describe("getDistinctRecommendationCards", () => {
+  it("shows distinct alternatives if available when one account wins all categories", () => {
+    // Construct a scenario where the Best Match is also the Best No Fuss and Flexible.
+    const result = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    
+    // Force bestMaxReturn, bestNoFuss, bestFlexibleWithdrawals to all be the same account
+    const noFuss = result.bestNoFuss!;
+    const mockResult = {
+      overall: [noFuss, ...result.overall.filter(r => r.account.id !== noFuss.account.id)],
+      bestMaxReturn: noFuss,
+      bestNoFuss: noFuss,
+      bestFlexibleWithdrawals: noFuss,
+    };
+    
+    const distinct = getDistinctRecommendationCards(mockResult);
+    
+    // It should find distinct accounts for No Fuss and Flexible
+    expect(distinct.displayBestMatch?.account.id).toBe(noFuss.account.id);
+    expect(distinct.displayNoFuss?.account.id).not.toBe(noFuss.account.id);
+    expect(distinct.displayFlexible?.account.id).not.toBe(noFuss.account.id);
+    expect(distinct.displayNoFuss?.account.id).not.toBe(distinct.displayFlexible?.account.id);
+    expect(distinct.noFussIsDuplicate).toBe(false);
+    expect(distinct.flexibleIsDuplicate).toBe(false);
+  });
+
+  it("allows duplicates and sets duplicate flags if no distinct alternatives exist", () => {
+    const result = rankAccounts(ACCOUNTS, SAMPLE_PROFILE);
+    
+    // Create a mock overall that ONLY contains one single account that is both no-fuss and flexible
+    const noFuss = result.bestNoFuss!;
+    const mockResult = {
+      overall: [noFuss],
+      bestMaxReturn: noFuss,
+      bestNoFuss: noFuss,
+      bestFlexibleWithdrawals: noFuss,
+    };
+    
+    const distinct = getDistinctRecommendationCards(mockResult);
+    
+    expect(distinct.displayBestMatch?.account.id).toBe(noFuss.account.id);
+    expect(distinct.displayNoFuss?.account.id).toBe(noFuss.account.id);
+    expect(distinct.displayFlexible?.account.id).toBe(noFuss.account.id);
+    expect(distinct.noFussIsDuplicate).toBe(true);
+    expect(distinct.flexibleIsDuplicate).toBe(true);
   });
 });
