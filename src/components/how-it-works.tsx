@@ -4,22 +4,26 @@ export function HowItWorks() {
   const steps = [
     {
       title: "We check your habits",
-      description: "We check your habits against each account’s conditions.",
+      description:
+        "Deposit frequency, card spend, and balance growth — matched against each account’s fine print.",
       icon: CheckCircle2,
     },
     {
       title: "We estimate your rate",
-      description: "We estimate the rate you’re likely to earn.",
+      description:
+        "Bonus rates only apply when conditions are met; otherwise we use the base or standard rate.",
       icon: Calculator,
     },
     {
       title: "We rank by true return",
-      description: "We rank by expected annual interest, not headline rate.",
+      description:
+        "Accounts are sorted by expected annual interest after caps, tiers, and intro periods.",
       icon: Trophy,
     },
     {
       title: "We explain trade-offs",
-      description: "We explain the trade-offs clearly.",
+      description:
+        "Each result shows why it won, what could block the bonus, and where to verify provider terms.",
       icon: ShieldAlert,
     },
   ];

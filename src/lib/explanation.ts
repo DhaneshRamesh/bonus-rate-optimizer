@@ -79,21 +79,91 @@ export function buildConditionSummary(
  * and a nudge toward simpler options when the account is complex and at risk.
  */
 export function buildExplanation(ranked: RankedAccount, user: UserProfile): string {
-  const { account, eligibility, annualInterest, extraAnnualBenefit, isNoFuss } = ranked;
+  const {
+    account,
+    eligibility,
+    annualInterest,
+    extraAnnualBenefit,
+    isNoFuss,
+    potentialUpside,
+    potentialAnnualInterest,
+  } = ranked;
+
+  // ── Hard ineligible (age restriction) ────────────────────────────────────
+  if (eligibility.hardIneligible) {
+    return (
+      `${account.provider} ${account.productName} has an age restriction — ` +
+      `based on what you entered, you are not eligible for this account. ` +
+      `${eligibility.unmetConditions[0]?.explanation ?? ""} ` +
+      `Verify provider terms before acting.`
+    ).replace(/\s{2,}/g, " ").trim();
+  }
+
+  // ── At risk — detailed breakdown ─────────────────────────────────────────
+  if (eligibility.status === "at_risk") {
+    const parts: string[] = [];
+
+    parts.push(
+      `Based on the details entered, ${account.provider} ${account.productName} — ` +
+      `you may miss this bonus rate as some conditions are currently at risk.`
+    );
+
+    if (eligibility.unmetConditions.length > 0) {
+      const list = eligibility.unmetConditions.map((c) => c.explanation).join(" ");
+      parts.push(`Conditions not currently met: ${list}`);
+    }
+
+    const absGap = Math.abs(extraAnnualBenefit);
+    const gapStr =
+      extraAnnualBenefit >= 0
+        ? `$${absGap.toFixed(0)} more`
+        : `$${absGap.toFixed(0)} less`;
+
+    parts.push(
+      `The estimate of $${annualInterest.toFixed(0)} uses the base rate only as a ` +
+      `conservative figure — it shows the rate you are likely to earn under current ` +
+      `assumptions (${gapStr} than your current ${user.currentRatePa}% rate).`
+    );
+
+    if (
+      potentialUpside !== undefined &&
+      potentialUpside > 50 &&
+      potentialAnnualInterest !== undefined
+    ) {
+      parts.push(
+        `If all conditions were consistently met, you could earn up to ` +
+        `$${potentialAnnualInterest.toFixed(0)} — an extra ` +
+        `$${potentialUpside.toFixed(0)} per year.`
+      );
+    }
+
+    if (account.conditionComplexityScore >= 3) {
+      parts.push(
+        `If tracking monthly conditions feels difficult, the no-fuss accounts in ` +
+        `this comparison may be easier to maintain consistently.`
+      );
+    }
+
+    parts.push(`Always verify current terms at the provider.`);
+
+    return parts.join(" ");
+  }
+
+  // ── Not eligible (behavioural) ────────────────────────────────────────────
+  if (eligibility.status === "not_eligible") {
+    const reason =
+      eligibility.unmetConditions[0]?.explanation ?? "you do not meet one or more requirements";
+    return (
+      `Based on the details entered, ${account.provider} ${account.productName} is not ` +
+      `currently eligible for the advertised bonus rate. ${reason} ` +
+      `The estimate uses the standard base rate only. ` +
+      `Verify provider terms before acting.`
+    );
+  }
+
+  // ── Likely eligible ───────────────────────────────────────────────────────
   const parts: string[] = [];
 
-  // ── Deterministic Overrides for Ineligibility ────────────────────────────
-  if (eligibility.status === "not_eligible") {
-    const reason = eligibility.unmetConditions[0]?.explanation || "you do not meet the requirements";
-    return `Based on the details entered, this account is not currently eligible for the advertised bonus rate because ${reason} The calculation uses the standard/base rate instead. You can verify the condition on the provider's product page.`;
-  }
-
-  if (eligibility.status === "at_risk") {
-    const reason = eligibility.unmetConditions[0]?.explanation || "you may miss a monthly requirement";
-    return `Based on the details entered, you may miss this bonus rate because ${reason} The expected return shown is based on the rate you are likely to earn under these assumptions.`;
-  }
-
-  // ── Situation sentence (Likely Eligible) ──────────────────────────────────
   if (isNoFuss) {
     parts.push(
       `Based on what you entered, ${account.provider} ${account.productName} is ` +
@@ -112,7 +182,7 @@ export function buildExplanation(ranked: RankedAccount, user: UserProfile): stri
       `It has no monthly deposit, card purchase, or balance growth requirements.`
     );
   } else if (eligibility.metConditions.length > 0) {
-    const list = eligibility.metConditions.map(c => c.label).join("; ");
+    const list = eligibility.metConditions.map((c) => c.label).join("; ");
     parts.push(`Conditions you meet: ${list}.`);
   }
 
@@ -161,18 +231,12 @@ export function buildExplanation(ranked: RankedAccount, user: UserProfile): stri
   }
 
   // ── Growth-sensitive withdrawal warning ───────────────────────────────────
-  if (
-    account.withdrawalFlexibility === "growth-sensitive" &&
-    eligibility.status === "likely_eligible"
-  ) {
+  if (account.withdrawalFlexibility === "growth-sensitive") {
     parts.push(
       `One thing to keep in mind: this account requires your balance to grow each ` +
       `month. Any net withdrawal could forfeit the bonus for that month.`
     );
   }
-
-  // ── Simpler-option nudge (at-risk + complex account) ─────────────────────
-  // Omitted for likely_eligible since this is now only for likely_eligible anyway.
 
   return parts.join(" ");
 }

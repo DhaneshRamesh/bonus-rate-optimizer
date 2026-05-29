@@ -29,21 +29,21 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background p-0 sm:p-4 md:p-6">
         <div className="flex-1 flex flex-col w-full max-w-[1400px] mx-auto overflow-hidden relative">
           {/* Nav */}
-          <header className="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur-md">
+          <header className="sticky top-0 z-50 border-b border-primary/20 bg-primary backdrop-blur-md shadow-sm">
             <div className="max-w-5xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="font-bold text-foreground text-2xl tracking-tight flex items-center font-serif">
+                <span className="font-bold text-primary-foreground text-2xl tracking-tight flex items-center font-serif">
                   <span className="relative inline-flex items-center justify-center">
-                    <span className="absolute w-[2px] h-full bg-background z-10 left-1/2 -translate-x-1/2"></span>
+                    <span className="absolute w-[2px] h-full bg-primary z-10 left-1/2 -translate-x-1/2"></span>
                     O
                   </span>
                   pen.money
                 </span>
-                <span className="hidden sm:inline text-xs font-medium text-foreground/90 border border-border rounded-full px-3 py-1 ml-2">
+                <span className="hidden sm:inline text-xs font-medium text-primary-foreground/90 border border-primary-foreground/30 rounded-full px-3 py-1 ml-2">
                   Optimizer
                 </span>
               </div>
-              <nav className="text-sm font-medium text-foreground/80">
+              <nav className="text-sm font-medium text-primary-foreground/90">
                 <span>Concept Demo</span>
               </nav>
             </div>

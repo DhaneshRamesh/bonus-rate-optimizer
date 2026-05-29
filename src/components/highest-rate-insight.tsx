@@ -1,5 +1,6 @@
 "use client";
 
+import { Lightbulb } from "lucide-react";
 import type { RankedAccount } from "@/types/ranking";
 
 interface HighestRateInsightProps {
@@ -33,8 +34,8 @@ export function HighestRateInsight({ selectedAccount, highestRateAccount }: High
   return (
     <div className="rounded-3xl border border-orange-200 bg-orange-50/50 p-6 mt-6">
       <div className="flex items-start gap-4">
-        <span className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-lg mt-0.5">
-          💡
+        <span className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center mt-0.5">
+          <Lightbulb className="w-4 h-4 text-orange-600" />
         </span>
         <div>
           <h4 className="text-sm font-semibold text-orange-950">

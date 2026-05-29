@@ -85,5 +85,5 @@ The application includes a suite of unit tests focusing on the core recommendati
 - **Richer switching workflow**: Provide direct deep links or integrations to streamline the account opening process.
 
 ## Demo links
-- **Deployed app**: [Insert Link Here]
-- **Walkthrough video**: [Insert Link Here]
+- **Deployed app**: Run locally with `npm run dev` — deployment link to be added before final submission.
+- **Walkthrough video**: To be added before final submission.
